@@ -950,7 +950,7 @@
   if(supabaseConfigured && window.supabase && typeof window.supabase.createClient === 'function'){
     try{
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: { persistSession: canPersistSession, storage: sessionAdapter }
+     auth: { persistSession: true, storage: sessionAdapter }
       });
     }catch(e){ sb = null; }
   }
