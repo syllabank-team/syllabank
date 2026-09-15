@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics — anonymous visit/session tracking only. Fill in your
+     real Measurement ID below (looks like G-XXXXXXXXXX) after creating a
+     free Google Analytics property. Leave the placeholder in place and
+     analytics simply won't load — nothing breaks either way. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7HYHJPDHQG"></script>
+<script>
+  var GA_MEASUREMENT_ID = 'G-7HYHJPDHQG';
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  if(GA_MEASUREMENT_ID.indexOf('YOUR_') === -1){
+    gtag('config', GA_MEASUREMENT_ID);
+  }
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syllabank — find your college, cut your book bill</title>
+<meta name="description" content="Free & open textbook resources, a verified student marketplace, and extra-help study videos for your campus. Type your school to get started.">
+<meta property="og:title" content="Syllabank — find your college, cut your book bill">
+<meta property="og:description" content="Free & open textbook resources, a verified student marketplace, and extra-help study videos for your campus.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Syllabank — find your college, cut your book bill">
+<meta name="twitter:description" content="Free & open textbook resources, a verified student marketplace, and extra-help study videos for your campus.">
+<!-- Renamed from "Coursebound" to "Syllabank": a real, active company (coursebound.org,
+     a paid course-tracker with its own copyright/trademark presence) already uses that
+     name. "Syllabank" turned up no conflicting product or trademark in a quick check,
+     but that is not a substitute for a real trademark clearance search before you launch
+     publicly — a lawyer or a paid search (e.g. via USPTO/TESS) is the real way to confirm
+     this before it's on real marketing materials. Swap the <title> and the two lines
+     above, plus the ".brand" text in the nav below, if you land on a different name. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- Firebase is optional — only loaded/used if you fill in FIREBASE_CONFIG below
+     instead of SUPABASE_URL/KEY. Pick one real backend, not both. -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --ink:#1b2318; --paper:#f2ecdc; --paper-dark:#e7dfc8; --green:#16233b;
+    --rust:#b8402a; --rust-dark:#8f3020; --gold:#c99a3e;
+    --line: rgba(27,35,24,0.18); --card-shadow: 3px 4px 0 rgba(27,35,24,0.12);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5;}
+  h1,h2,h3,.serif{font-family:'Fraunces',serif;font-weight:600;margin:0;letter-spacing:-0.01em;}
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+
+  nav{display:flex;justify-content:space-between;align-items:center;padding:18px 40px;background:var(--green);color:var(--paper);position:sticky;top:0;z-index:50;gap:20px;flex-wrap:wrap;}
+  nav .brand{font-family:'Fraunces',serif;font-size:22px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  nav .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--rust);display:inline-block;}
+  nav ul{list-style:none;display:flex;gap:24px;margin:0;padding:0;font-size:13.5px;flex-wrap:wrap;}
+  nav ul a{text-decoration:none;opacity:0.85;}
+  nav ul a:hover{opacity:1;}
+  .nav-auth{font-size:13px;display:flex;align-items:center;gap:10px;}
+  .nav-auth a, .nav-auth button{color:var(--paper);}
+
+  .status-bar{background:#0a0f18;color:rgba(242,236,220,0.85);font-size:12.5px;padding:8px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;}
+  .status-dot.live{background:#5fae72;}
+
+  .hero{background:var(--green);color:var(--paper);padding:80px 40px 110px;position:relative;overflow:hidden;}
+  .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);background-size:100% 34px;pointer-events:none;}
+  .hero-inner{max-width:1100px;margin:0 auto;position:relative;display:grid;grid-template-columns:1.2fr 0.9fr;gap:56px;align-items:end;}
+  @media (max-width:900px){.hero-inner{grid-template-columns:1fr;}}
+  .hero h1{font-size:clamp(34px,5vw,60px);line-height:1.03;}
+  .hero p.lede{margin-top:20px;max-width:44ch;font-size:16.5px;color:rgba(242,236,220,0.8);}
+  .stat-row{display:flex;gap:28px;margin-top:30px;font-size:13px;color:rgba(242,236,220,0.65);flex-wrap:wrap;}
+  .stat-row b{display:block;font-family:'Fraunces',serif;font-size:24px;color:var(--paper);font-weight:600;}
+
+  .card{background:var(--paper);color:var(--ink);padding:24px 24px 22px;box-shadow:var(--card-shadow);position:relative;border:1px solid rgba(0,0,0,0.05);}
+  .card::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:var(--rust);box-shadow:0 2px 3px rgba(0,0,0,0.35);}
+  .card .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--rust-dark);display:block;margin-bottom:10px;}
+
+  select,input,textarea{font-family:'Inter',sans-serif;font-size:15px;width:100%;padding:10px 12px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:2px;}
+  select:focus,input:focus,textarea:focus{outline:2px solid var(--rust);outline-offset:1px;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--rust);color:#fff;border:none;padding:11px 18px;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;border-radius:2px;transition:transform 0.12s ease,background 0.12s ease;}
+  .btn:hover{background:var(--rust-dark);}
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .btn.ghost:hover{background:rgba(27,35,24,0.06);}
+  .btn.small{padding:7px 12px;font-size:12.5px;}
+  .btn.danger{background:#7a2418;}
+  .btn:disabled{background:#a99;cursor:not-allowed;}
+
+  .card form{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
+  .field-label{font-size:12px;color:rgba(27,35,24,0.6);margin-bottom:5px;display:block;}
+
+  section{padding:70px 40px;max-width:1100px;margin:0 auto;}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:34px;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;}
+  .section-head h2{font-size:30px;}
+  .section-head p{max-width:46ch;color:rgba(27,35,24,0.65);font-size:14.5px;margin-top:6px;}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--rust-dark);}
+
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media (max-width:800px){.grid-3{grid-template-columns:1fr;}}
+  .quicklook-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .quicklook-grid .res-card{gap:6px;}
+  .quicklook-grid h3{font-size:16px;}
+  .quicklook-grid p{font-size:12.5px;}
+  @media (max-width:420px){.quicklook-grid{grid-template-columns:1fr;}}
+  .res-card{border:1px solid var(--line);background:#fbf8ef;padding:22px;display:flex;flex-direction:column;gap:10px;}
+  .res-card h3{font-size:18px;}
+  .res-card p{font-size:13.5px;color:rgba(27,35,24,0.68);margin:0;flex:1;}
+  .res-card a.out{font-size:13px;font-weight:600;color:var(--rust-dark);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-top:4px;}
+  .badge{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--gold);color:#241d0c;padding:3px 8px;border-radius:20px;width:fit-content;}
+
+  .ledger{border-top:1px solid var(--line);}
+  .ledger-row{display:grid;grid-template-columns:200px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--line);}
+  @media (max-width:700px){.ledger-row{grid-template-columns:1fr;}}
+  .ledger-row .lbl{font-family:'Fraunces',serif;font-size:17px;}
+  .ledger-row .desc{font-size:14px;color:rgba(27,35,24,0.68);}
+
+  .market-wrap,.help-wrap,.account-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:32px;}
+  @media (max-width:850px){.market-wrap,.help-wrap,.account-wrap{grid-template-columns:1fr;}}
+
+  .item-card{border:1px solid var(--line);background:#fbf8ef;padding:14px 16px;margin-bottom:12px;}
+  .item-card .top-row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;}
+  .item-card .course{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--rust-dark);}
+  .item-card h4{font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:2px 0 4px;}
+  .item-card .meta{font-size:12px;color:rgba(27,35,24,0.6);}
+  .item-card .price{font-family:'Fraunces',serif;font-size:20px;white-space:nowrap;}
+  .item-card iframe{width:100%;aspect-ratio:16/9;border:none;background:#000;margin-top:8px;}
+  .item-card a.link-out{font-size:13px;font-weight:600;color:var(--rust-dark);text-decoration:none;}
+  .item-card .note{font-size:13px;color:rgba(27,35,24,0.7);margin-top:8px;font-style:italic;}
+  .item-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .verified-tag{font-size:11px;color:#2b6b3f;font-weight:600;}
+  .item-card.watch-match{border-left:4px solid var(--gold);}
+  .watch-match-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--gold);color:#241d0c;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:6px;}
+  .watch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .report-box{margin-top:10px;padding:10px;background:#f2e9d8;border:1px solid var(--line);display:none;}
+  .edit-box{margin-top:10px;padding:10px;background:#eef4ec;border:1px solid var(--line);display:none;}
+  .edit-box.open{display:block;}
+  .report-box.open{display:block;}
+  .report-box textarea{min-height:60px;resize:vertical;}
+
+  .empty-note{font-size:13.5px;color:rgba(27,35,24,0.55);font-style:italic;padding:14px 0;}
+  .status-msg{font-size:13px;margin-top:8px;min-height:18px;}
+  .status-msg.ok{color:#2b6b3f;}
+  .status-msg.err{color:var(--rust-dark);}
+  .inline-note{font-size:12px;background:rgba(201,154,62,0.18);border:1px solid rgba(201,154,62,0.4);color:#5a4212;padding:8px 12px;margin-bottom:14px;}
+
+  footer{background:var(--green);color:rgba(242,236,220,0.7);padding:32px 40px;font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .perks-list{margin:0;padding-left:20px;font-size:14px;color:rgba(27,35,24,0.75);display:flex;flex-direction:column;gap:8px;}
+
+  .glitch-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--green);color:var(--paper);padding:12px 18px;border-radius:3px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,0.25);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s ease;max-width:90vw;}
+  .glitch-toast.show{opacity:1;}
+
+  .code-step{display:none;}
+  .code-step.show{display:flex;}
+  .intensity-btn.active{background:var(--green);color:var(--paper);border-color:var(--green);}
+  .toggle-btn[data-on="true"]{background:#2b6b3f;color:#fff;border-color:#2b6b3f;}
+  .feedback-card{border:1px solid var(--line);background:#fbf8ef;padding:16px 18px;margin-bottom:16px;}
+  .feedback-card.critique{border-left:4px solid var(--rust);}
+  .feedback-card.gentle{border-left:4px solid #5fae72;}
+  .feedback-card .fb-tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:rgba(27,35,24,0.5);display:block;margin-bottom:6px;}
+  .admin-row{border:1px solid var(--line);background:#fbf8ef;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+  .admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px;}
+  @media (max-width:700px){.admin-stats{grid-template-columns:1fr;}}
+  .admin-stat{border:1px solid var(--line);background:#fbf8ef;padding:18px;text-align:center;}
+  .admin-stat b{font-family:'Fraunces',serif;font-size:30px;display:block;}
+  .admin-stat span{font-size:12px;color:rgba(27,35,24,0.6);}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="dot"></span>Syllabank</div>
+  <ul>
+    <li><a href="#resources" data-i18n="nav.resources">Free & open</a></li>
+    <li><a href="#marketplace" data-i18n="nav.marketplace">Marketplace</a></li>
+    <li><a href="#help" data-i18n="nav.help">Extra help</a></li>
+    <li><a href="#scholar" data-i18n="nav.scholar">Scholar Mode</a></li>
+    <li><a href="#premium" data-i18n="nav.premium">Syllabank+</a></li>
+    <li><a href="#essentials" data-i18n="nav.essentials">Essentials</a></li>
+    <li><a href="#legal" data-i18n="nav.legal">Terms & Privacy</a></li>
+    <li id="nav-admin-link" hidden><a href="#admin">Admin</a></li>
+  </ul>
+  <div class="nav-auth">
+    <select id="lang-switcher" style="background:transparent;color:var(--paper);border:1px solid rgba(242,236,220,0.4);width:auto;padding:5px 8px;font-size:12.5px;">
+      <option value="en">English</option>
+      <option value="es">Español</option>
+      <option value="zh">中文</option>
+      <option value="hi">हिन्दी</option>
+      <option value="ko">한국어</option>
+      <option value="vi">Tiếng Việt</option>
+    </select>
+    <span id="nav-auth-logged-out"><a href="#account" data-i18n="nav.login">Log in</a></span>
+    <span id="nav-auth-logged-in" hidden>
+      <span id="nav-auth-email"></span> · <button class="btn small ghost" id="nav-logout-btn" type="button" data-i18n="nav.logout" style="border-color:rgba(242,236,220,0.4);">Log out</button>
+    </span>
+  </div>
+</nav>
+
+<div class="status-bar" id="status-bar">
+  <span class="status-dot" id="status-dot"></span>
+  <span id="status-text">Checking connection…</span>
+  <button class="btn small ghost" id="test-connection-btn" type="button" style="border-color:rgba(242,236,220,0.3);color:rgba(242,236,220,0.9);">Test connection</button>
+  <span id="connection-test-result"></span>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="badge" data-i18n="hero.eduBadge" style="margin-bottom:14px;">.edu verified</span>
+      <h1 data-i18n="hero.title">Your college already<br>paid for half these books.</h1>
+      <p class="lede" data-i18n="hero.lede">Type your school, see what's free, what other verified students are selling, and find extra-help videos for whatever class is kicking your butt.</p>
+      <div class="card" style="display:inline-block;padding:14px 22px;margin-top:20px;">
+        <span class="tag" style="margin-bottom:4px;" data-i18n="hero.statLabel">average savings</span>
+        <div style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--rust-dark);">$1,300<span style="font-size:15px;color:var(--ink);" data-i18n="hero.perYear">/yr</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="tag" data-i18n="hero.stepone">Step one</span>
+      <h3 style="font-size:20px;margin-bottom:14px;" data-i18n="hero.linkCollege">Link your college</h3>
+      <form id="college-form">
+        <div>
+          <label class="field-label" for="hero-college-input" data-i18n="hero.typeSchool">Type your school — any school works</label>
+          <input id="hero-college-input" type="text" list="college-options" placeholder="e.g. University of Florida" data-i18n-ph="hero.schoolPlaceholder" autocomplete="off">
+        </div>
+        <button class="btn" type="submit" data-i18n="hero.goButton">Go to my campus board</button>
+      </form>
+      <p style="font-size:11.5px;color:rgba(27,35,24,0.5);margin-top:10px;" data-i18n="hero.browsingNote">
+        Browsing is open to everyone. Posting requires a quick, free .edu email verification.
+      </p>
+    </div>
+  </div>
+</div>
+
+<datalist id="college-options"></datalist>
+<datalist id="topic-options"></datalist>
+
+<section style="padding:40px 40px 0;">
+  <div class="quicklook-grid">
+    <a href="#resources" class="res-card" style="text-decoration:none;color:inherit;">
+      <span class="badge" data-i18n="quicklook.freeBadge">Free</span>
+      <h3 data-i18n="quicklook.textbooks">Free textbooks</h3>
+      <p data-i18n="quicklook.textbooksDesc">Open, legal resources</p>
+    </a>
+    <a href="#marketplace" class="res-card" style="text-decoration:none;color:inherit;">
+      <span class="badge" data-i18n="quicklook.tradeBadge">Trade</span>
+      <h3 data-i18n="quicklook.marketplace">Marketplace</h3>
+      <p data-i18n="quicklook.marketplaceDesc">Buy and sell with real students</p>
+    </a>
+    <a href="#help" class="res-card" style="text-decoration:none;color:inherit;">
+      <span class="badge" data-i18n="quicklook.helpBadge">Help</span>
+      <h3 data-i18n="quicklook.videos">Study videos</h3>
+      <p data-i18n="quicklook.videosDesc">Get unstuck on any topic</p>
+    </a>
+    <a href="#account" class="res-card" style="text-decoration:none;color:inherit;">
+      <span class="badge" data-i18n="quicklook.trustBadge">Trust</span>
+      <h3 data-i18n="quicklook.verified">Verified</h3>
+      <p data-i18n="quicklook.verifiedDesc">Real .edu accounts only</p>
+    </a>
+  </div>
+</section>
+
+<section id="resources">
+  <div class="section-head">
+    <div>
+      <span class="kicker" data-i18n="resources.kicker">No cost, no gray areas</span>
+      <h2 data-i18n="resources.title">Free & legally open textbooks</h2>
+      <p data-i18n="resources.intro">Full courses' worth of material, openly licensed by the authors or held by your library — nothing here requires getting around a paywall.</p>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.open">Open license</span><h3>OpenStax</h3><p data-i18n="resources.openstax">Peer-reviewed, full-length textbooks for intro courses — bio, calc, psych, econ, and more — free to read online or download as a PDF.</p><a class="out" href="https://openstax.org" target="_blank" rel="noopener">openstax.org →</a></div>
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.open">Open license</span><h3>Open Textbook Library</h3><p data-i18n="resources.otl">A searchable catalog of hundreds of openly licensed college textbooks, reviewed by faculty for classroom use.</p><a class="out" href="https://open.umn.edu/opentextbooks" target="_blank" rel="noopener">open.umn.edu →</a></div>
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.open">Open license</span><h3>LibreTexts</h3><p data-i18n="resources.libretexts">Open-source textbooks and course material across the sciences, math, humanities, and social sciences.</p><a class="out" href="https://libretexts.org" target="_blank" rel="noopener">libretexts.org →</a></div>
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.tuition">Your tuition</span><h3 data-i18n="resources.reservesTitle">Library course reserves</h3><p data-i18n="resources.reserves">Most campus libraries keep a physical or scanned copy of assigned texts on reserve, free to borrow for a few hours at a time.</p><a class="out" href="#essentials" data-i18n="resources.reservesLink">See how to find it →</a></div>
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.low">Low cost</span><h3 data-i18n="resources.rentalTitle">Rental marketplaces</h3><p data-i18n="resources.rental">Chegg, Amazon Textbook Rentals, and campus bookstore rental programs run 60–80% cheaper than buying new.</p><a class="out" href="https://www.chegg.com/textbooks" target="_blank" rel="noopener" data-i18n="resources.rentalLink">Compare rentals →</a></div>
+    <div class="res-card"><span class="badge" data-i18n="resources.badge.public">Public domain</span><h3>Project Gutenberg</h3><p data-i18n="resources.gutenberg">70,000+ free ebooks — strong for lit, philosophy, and classics courses where the assigned edition is old enough to be public domain.</p><a class="out" href="https://www.gutenberg.org" target="_blank" rel="noopener">gutenberg.org →</a></div>
+  </div>
+</section>
+
+<section id="marketplace" style="background:var(--paper-dark);">
+  <div class="section-head">
+    <div>
+      <span class="kicker" data-i18n="market.kicker">Student to student</span>
+      <h2 data-i18n="market.title">Buy, sell, or trade on your campus</h2>
+      <p data-i18n="market.intro">Shared live with everyone. Posting requires a verified .edu account, so every listing is tied to a real student — not anonymous spam.</p>
+    </div>
+  </div>
+  <div class="inline-note" style="margin-bottom:24px;" data-i18n="market.safety">
+    <b>Meeting up:</b> trade in a public campus spot — a library lobby, student union, or dining hall — and bring a friend if you can. Many campuses also have a safety escort service; check with campus police/security if you'd rather not meet alone. Syllabank isn't part of the trade itself and can't guarantee any listing — a verified email confirms someone's a real student at that school, not that the item or price is as described.
+  </div>
+  <div class="market-wrap">
+    <div class="card" style="position:relative;">
+      <span class="tag" data-i18n="market.postTag">Post a listing</span>
+      <h3 style="font-size:20px;margin-bottom:14px;" data-i18n="market.sellTitle">Sell or trade a book</h3>
+      <div id="listing-form-locked">
+        <p style="font-size:14px;color:rgba(27,35,24,0.7);" data-i18n="market.needVerify">You need a verified .edu account to post. It takes under a minute.</p>
+        <a class="btn small" href="#account" data-i18n="market.verifyLink">Verify my email →</a>
+      </div>
+      <form id="listing-form" hidden>
+        <div><label class="field-label" data-i18n="market.yourCollege">Your college</label><input id="listing-college-input" type="text" list="college-options" placeholder="Type your school" data-i18n-ph="market.typeSchoolPh" autocomplete="off" required></div>
+        <div><label class="field-label" data-i18n="market.bookTitle">Book title</label><input id="listing-title" type="text" placeholder="e.g. Campbell Biology, 12th ed." data-i18n-ph="market.bookTitlePh" required></div>
+        <div><label class="field-label" data-i18n="market.courseCode">Course code (optional)</label><input id="listing-course" type="text" placeholder="e.g. BIOL 101"></div>
+        <div>
+          <label class="field-label" data-i18n="market.isbn">ISBN (optional)</label>
+          <div style="display:flex;gap:8px;">
+            <input id="listing-isbn" type="text" placeholder="e.g. 9780134093413" inputmode="numeric">
+            <button class="btn small ghost" type="button" id="check-isbn-price-btn" data-i18n="market.checkPrice" style="white-space:nowrap;">Check fair price</button>
+          </div>
+          <div class="status-msg" id="isbn-price-note"></div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div style="flex:1;"><label class="field-label" data-i18n="market.price">Price ($)</label><input id="listing-price" type="number" min="0" placeholder="45" required></div>
+          <div style="flex:1;"><label class="field-label" data-i18n="market.contact">How to reach you</label><input id="listing-contact" type="text" placeholder="email or handle" data-i18n-ph="market.contactPh" required></div>
+        </div>
+        <button class="btn" type="submit" id="listing-submit" data-i18n="market.postBtn">Post listing</button>
+        <div class="status-msg" id="listing-status"></div>
+        <button class="btn small ghost" type="button" id="share-listing-btn" hidden data-i18n="market.shareBtn">Share to your class group chat</button>
+      </form>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <h3 style="font-size:19px;"><span data-i18n="market.listingsFor">Listings for:</span> <span id="viewing-college" style="color:var(--rust-dark);" data-i18n="market.noSchool">no school linked yet</span></h3>
+        <button class="btn small ghost" id="refresh-listings" type="button" data-i18n="market.refresh">Refresh</button>
+      </div>
+      <div id="watch-course-box" hidden style="display:flex;gap:8px;margin-bottom:14px;">
+        <input id="watch-course-input" type="text" placeholder="Watch a course code, e.g. BIOL 101" data-i18n-ph="market.watchPh" style="flex:1;">
+        <button class="btn small ghost" type="button" id="watch-course-btn" data-i18n="market.watchBtn">Watch</button>
+      </div>
+      <div id="listings-container"><p class="empty-note" data-i18n="market.linkFirst">Link your college above to load its listings.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="help">
+  <div class="section-head">
+    <div>
+      <span class="kicker" data-i18n="help.kicker">Stuck on something?</span>
+      <h2 data-i18n="help.title">Search a topic, find extra-help videos</h2>
+      <p data-i18n="help.intro">Search any subject. Verified students can add a video they found helpful — YouTube links play right here.</p>
+    </div>
+  </div>
+  <div class="help-wrap">
+    <div class="card" style="position:relative;">
+      <span class="tag" data-i18n="help.addTag">Add a video</span>
+      <h3 style="font-size:20px;margin-bottom:14px;" data-i18n="help.helpOut">Help someone out</h3>
+      <div id="video-form-locked">
+        <p style="font-size:14px;color:rgba(27,35,24,0.7);" data-i18n="help.needVerify">Verify your .edu email to add a video.</p>
+        <a class="btn small" href="#account" data-i18n="market.verifyLink">Verify my email →</a>
+      </div>
+      <form id="video-form" hidden>
+        <div><label class="field-label" data-i18n="help.topic">Topic</label><input id="video-topic-input" type="text" list="topic-options" placeholder="e.g. Organic Chemistry, MLA citations" data-i18n-ph="help.topicPh" autocomplete="off" required></div>
+        <div><label class="field-label" data-i18n="help.videoTitle">Video title</label><input id="video-title" type="text" placeholder="e.g. SN1 vs SN2 explained simply" data-i18n-ph="help.videoTitlePh" required></div>
+        <div><label class="field-label" data-i18n="help.videoLink">Video link</label><input id="video-url" type="url" placeholder="https://youtube.com/watch?v=..." required></div>
+        <div><label class="field-label" data-i18n="help.why">Why it helped (optional)</label><input id="video-note" type="text" placeholder="e.g. finally made the mechanism click for me" data-i18n-ph="help.whyPh"></div>
+        <button class="btn" type="submit" id="video-submit" data-i18n="help.addBtn">Add video</button>
+        <div class="status-msg" id="video-status"></div>
+      </form>
+    </div>
+    <div>
+      <div style="margin-bottom:14px;">
+        <label class="field-label" for="topic-search-input" data-i18n="help.searchTopic">Search a topic</label>
+        <div style="display:flex;gap:10px;">
+          <input id="topic-search-input" type="text" list="topic-options" placeholder="e.g. Calculus, Essay writing" data-i18n-ph="help.searchPh" autocomplete="off">
+          <button class="btn small" id="topic-search-btn" type="button" data-i18n="help.searchBtn" style="white-space:nowrap;">Search</button>
+        </div>
+      </div>
+      <h3 style="font-size:19px;margin-bottom:14px;"><span data-i18n="help.videosFor">Videos for:</span> <span id="viewing-topic" style="color:var(--rust-dark);" data-i18n="help.noTopic">no topic searched yet</span></h3>
+      <div id="videos-container"><p class="empty-note" data-i18n="help.searchFirst">Search a topic above to see videos other students have added.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="scholar" style="background:var(--paper-dark);">
+  <div class="section-head">
+    <div>
+      <span class="kicker">Train your brain, don't just cram</span>
+      <h2>Scholar Mode</h2>
+      <p>Loose enough that it doesn't feel like homework, sharp enough that it actually sticks. Pick your major for a curated starting point, then use the brain trainer whenever you want a real workout instead of passive re-reading.</p>
+      <p id="scholar-lang-note" style="font-size:12px;color:rgba(27,35,24,0.5);margin-top:6px;" hidden>This section is only available in English for now.</p>
+    </div>
+  </div>
+
+  <div class="help-wrap">
+    <div class="card" style="position:relative;">
+      <span class="tag">Your field</span>
+      <h3 style="font-size:20px;margin-bottom:14px;">Major or minor</h3>
+      <form id="scholar-form">
+        <div><label class="field-label" for="scholar-input">Type your major/minor</label><input id="scholar-input" type="text" list="major-options" placeholder="e.g. Computer Science, Biology, Economics" autocomplete="off"></div>
+        <button class="btn" type="submit">Find my resources</button>
+      </form>
+      <p style="font-size:11.5px;color:rgba(27,35,24,0.5);margin-top:10px;">
+        Maps to broad field groupings (STEM, health sciences, business, humanities, social sciences, arts) rather than every one of the 1,800+ specific majors out there — your career center will always beat a generic list on campus-exact clubs.
+      </p>
+    </div>
+    <div>
+      <h3 style="font-size:19px;margin-bottom:10px;">Resources for: <span id="scholar-viewing" style="color:var(--rust-dark);">no major entered yet</span></h3>
+      <div id="scholar-resources-container"><p class="empty-note">Enter a major above to see curated resources.</p></div>
+      <h3 style="font-size:19px;margin:20px 0 10px;">Extracurriculars worth exploring</h3>
+      <div id="scholar-extracurriculars-container"><p class="empty-note">Enter a major above to see suggestions.</p></div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px;padding-top:36px;border-top:1px solid var(--line);">
+    <h3 style="font-size:24px;margin-bottom:8px;">The Brain Trainer</h3>
+    <p style="font-size:14px;color:rgba(27,35,24,0.65);max-width:60ch;margin-bottom:24px;">
+      One open-ended question at a time. Write a real answer, not a guess — then decide if you want it graded gently or torn apart.
+    </p>
+
+    <div class="help-wrap">
+      <div class="card" style="position:relative;">
+        <span class="tag">Settings</span>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <label class="field-label">Intensity</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn small ghost intensity-btn" type="button" data-level="relaxed">Relaxed</button>
+              <button class="btn small ghost intensity-btn" type="button" data-level="balanced">Balanced</button>
+              <button class="btn small ghost intensity-btn" type="button" data-level="elite">Elite</button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><label class="field-label" style="margin:0;">AI Mode</label><span style="font-size:11.5px;color:rgba(27,35,24,0.55);">Dynamic questions & AI-read feedback</span></div>
+            <button class="btn small ghost toggle-btn" type="button" id="ai-mode-toggle" data-on="false">Off</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><label class="field-label" style="margin:0;">Critique Mode</label><span style="font-size:11.5px;color:rgba(27,35,24,0.55);">Blunt, honest criticism instead of encouragement</span></div>
+            <button class="btn small ghost toggle-btn" type="button" id="critique-mode-toggle" data-on="false">Off</button>
+          </div>
+          <div id="ai-mode-note" class="inline-note" hidden></div>
+          <button class="btn" type="button" id="new-challenge-btn">New challenge</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="position:relative;margin-bottom:20px;">
+          <span class="tag" id="challenge-difficulty-tag">Balanced</span>
+          <h3 style="font-size:18px;margin-bottom:12px;" id="challenge-question">Pick your major above, then hit "New challenge" to get your first question.</h3>
+          <textarea id="challenge-answer" placeholder="Write your answer here — a real attempt, not a guess." style="min-height:120px;resize:vertical;"></textarea>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+            <button class="btn small" type="button" id="get-feedback-btn">Get feedback</button>
+            <span class="status-msg" id="feedback-status"></span>
+          </div>
+        </div>
+        <div id="feedback-panel"></div>
+        <div class="card" style="position:relative;">
+          <span class="tag">Focus timer</span>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <span style="font-family:'Fraunces',serif;font-size:34px;" id="timer-display">10:00</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn small ghost timer-preset" type="button" data-mins="10">10m</button>
+              <button class="btn small ghost timer-preset" type="button" data-mins="20">20m</button>
+              <button class="btn small ghost timer-preset" type="button" data-mins="30">30m</button>
+              <button class="btn small" type="button" id="timer-start-btn">Start</button>
+              <button class="btn small ghost" type="button" id="timer-reset-btn">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<datalist id="major-options"></datalist>
+
+<section id="account" style="background:var(--paper-dark);">
+  <div class="section-head">
+    <div>
+      <span class="kicker" data-i18n="account.kicker">Verified student account</span>
+      <h2 data-i18n="account.title">Log in / verify your .edu email</h2>
+      <p id="account-intro-text" data-i18n="account.introCode">No password to remember — we email you a 6-digit code. This is what keeps postings tied to a real person instead of anonymous spam.</p>
+    </div>
+  </div>
+
+  <div class="account-wrap">
+    <div class="card" id="auth-panel" style="position:relative;">
+      <p id="no-persist-note" class="inline-note" hidden style="margin-bottom:14px;">This browser/preview doesn't allow staying logged in across reloads, so you'll need to re-verify each visit. This works normally once the site is hosted on a real domain.</p>
+      <div id="auth-logged-out">
+        <span class="tag" data-i18n="account.step1">Step 1</span>
+        <form id="send-code-form">
+          <div><label class="field-label" for="auth-email" data-i18n="account.eduEmail">Your .edu email</label><input id="auth-email" type="email" placeholder="you@school.edu" required></div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(27,35,24,0.75);">
+            <input type="checkbox" id="age-confirm-checkbox" style="width:auto;">
+            <span data-i18n="account.ageConfirm">I confirm I am 18 years of age or older</span>
+          </label>
+          <button class="btn" type="submit" id="send-code-btn" data-i18n="account.sendCodeBtn">Send verification code</button>
+          <div class="status-msg" id="send-code-status"></div>
+        </form>
+        <form id="verify-code-form" class="code-step">
+          <div><label class="field-label" for="auth-code" data-i18n="account.sixDigit">6-digit code</label><input id="auth-code" type="text" inputmode="numeric" placeholder="123456" required></div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(27,35,24,0.75);">
+            <input type="checkbox" id="remember-me-checkbox" style="width:auto;">
+            <span data-i18n="account.rememberMe">Keep me logged in on this device</span>
+          </label>
+          <button class="btn" type="submit" id="verify-code-btn" data-i18n="account.verifyLogin">Verify & log in</button>
+          <div class="status-msg" id="verify-code-status"></div>
+        </form>
+      </div>
+      <div id="auth-logged-in" hidden>
+        <span class="tag" data-i18n="account.loggedIn">Logged in</span>
+        <p style="font-size:15px;"><span data-i18n="account.verifiedAs">Verified as</span> <b id="auth-current-email"></b></p>
+        <button class="btn ghost" type="button" id="account-logout-btn" data-i18n="nav.logout">Log out</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="font-size:19px;margin-bottom:14px;" data-i18n="account.myPosts">My posts</h3>
+      <p id="my-reputation-line" style="font-size:13px;color:rgba(27,35,24,0.7);margin:-8px 0 10px;"></p>
+      <div id="my-posts-container"><p class="empty-note" data-i18n="account.loginToSee">Log in to see and manage what you've posted.</p></div>
+      <h3 style="font-size:19px;margin:24px 0 10px;" data-i18n="account.watchedCourses">Watched course codes</h3>
+      <p style="font-size:12px;color:rgba(27,35,24,0.55);margin-bottom:10px;" data-i18n="account.watchNote">
+        Highlights matching listings when you're viewing that college's board — this doesn't email or push-notify you yet, since real alerts need a backend job, not just a browser tab.
+      </p>
+      <div id="my-watches-container"><p class="empty-note" data-i18n="account.watchEmpty">Watch a course code from any college's marketplace board to see it here.</p></div>
+      <h3 style="font-size:19px;margin:24px 0 10px;" data-i18n="account.myReports">Reports I've filed</h3>
+      <p style="font-size:12px;color:rgba(27,35,24,0.55);margin-bottom:10px;" data-i18n="account.myReportsNote">
+        Shows here in-app once an admin reviews it — no email yet either, for the same reason as above.
+      </p>
+      <div id="my-reports-container"><p class="empty-note">Log in to see reports you've filed.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="premium" style="background:var(--paper-dark);">
+  <div class="section-head">
+    <div>
+      <span class="kicker">Syllabank+</span>
+      <h2 data-i18n="premium.title">Early access & extra perks</h2>
+      <p data-i18n="premium.intro">This is a concept preview, not a live billing system — no payment is collected anywhere on this page.</p>
+    </div>
+  </div>
+  <div class="inline-note" id="referral-banner" hidden style="margin-bottom:24px;" data-i18n="premium.referralBanner">
+    You were invited by a fellow student — join the list below and you'll both get priority once Syllabank+ is real.
+  </div>
+  <div class="market-wrap">
+    <div class="card" style="position:relative;">
+      <span class="tag" data-i18n="premium.plannedTag">Planned perks</span>
+      <h3 style="font-size:20px;margin-bottom:14px;" data-i18n="premium.whatInclude">What Syllabank+ would include</h3>
+      <ul class="perks-list">
+        <li data-i18n="premium.perk1">No limit on active marketplace listings</li>
+        <li data-i18n="premium.perk2">Early access to new campus integrations first</li>
+        <li data-i18n="premium.perk3">Priority on requested study-help topics</li>
+        <li data-i18n="premium.perk4">An ad-free layout (there are no ads today either)</li>
+      </ul>
+      <p style="font-size:12px;color:rgba(27,35,24,0.55);margin-top:14px;" data-i18n="premium.notBuiltYet">None of this is built yet — it's a placeholder for what a paid tier could offer later.</p>
+    </div>
+    <div>
+      <h3 style="font-size:19px;margin-bottom:14px;" data-i18n="premium.joinList">Join the early-access list</h3>
+      <form id="premium-form" class="card" style="position:relative;">
+        <span class="tag" data-i18n="premium.noPayment">No payment required</span>
+        <div><label class="field-label" for="premium-email" data-i18n="premium.email">Email</label><input id="premium-email" type="email" placeholder="you@school.edu" required></div>
+        <button class="btn" type="submit" id="premium-submit" data-i18n="premium.joinBtn">Join early access</button>
+        <div class="status-msg" id="premium-status"></div>
+      </form>
+      <div id="invite-link-box" hidden style="margin-top:16px;">
+        <label class="field-label" data-i18n="premium.inviteLabel">Your invite link — share it, and whoever joins with it gets priority too</label>
+        <div style="display:flex;gap:8px;">
+          <input id="invite-link-input" type="text" readonly style="font-size:13px;">
+          <button class="btn small ghost" type="button" id="copy-invite-link-btn" data-i18n="premium.copyBtn">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="essentials">
+  <div class="section-head">
+    <div><span class="kicker" data-i18n="essentials.kicker">Beyond textbooks</span><h2 data-i18n="essentials.title">Campus essentials worth knowing</h2><p data-i18n="essentials.intro">The offices and programs most students don't find out about until sophomore year.</p></div>
+  </div>
+  <div class="ledger">
+    <div class="ledger-row"><div class="lbl" data-i18n="essentials.aid">Financial aid office</div><div class="desc" data-i18n="essentials.aidDesc">Ask about a "textbook scholarship" or "book voucher" fund specifically.</div></div>
+    <div class="ledger-row"><div class="lbl" data-i18n="essentials.pantry">Food pantry</div><div class="desc" data-i18n="essentials.pantryDesc">Most campuses run one now, usually through student affairs — no proof of need required at most.</div></div>
+    <div class="ledger-row"><div class="lbl" data-i18n="essentials.tutoring">Tutoring & writing center</div><div class="desc" data-i18n="essentials.tutoringDesc">Free, tuition-funded, and often under-used.</div></div>
+    <div class="ledger-row"><div class="lbl" data-i18n="essentials.registrar">Registrar</div><div class="desc" data-i18n="essentials.registrarDesc">Confirms your exact required edition before you buy anything.</div></div>
+    <div class="ledger-row"><div class="lbl" data-i18n="essentials.disability">Disability / accessibility services</div><div class="desc" data-i18n="essentials.disabilityDesc">Can provide accessible digital textbook formats at no cost if you qualify.</div></div>
+  </div>
+</section>
+
+<section id="admin" hidden>
+  <div class="section-head">
+    <div><span class="kicker">Owner view</span><h2>Site admin</h2><p>Only visible to accounts flagged as admin in the database — this check happens server-side, not just by hiding the link.</p></div>
+  </div>
+  <div class="admin-stats">
+    <div class="admin-stat"><b id="admin-stat-users">—</b><span>Verified accounts</span></div>
+    <div class="admin-stat"><b id="admin-stat-listings">—</b><span>Active listings</span></div>
+    <div class="admin-stat"><b id="admin-stat-videos">—</b><span>Videos added</span></div>
+  </div>
+  <h3 style="font-size:19px;margin-bottom:14px;">Reported content</h3>
+  <div id="admin-reports-container"><p class="empty-note">Loading…</p></div>
+  <p style="font-size:12px;color:rgba(27,35,24,0.55);margin-top:20px;">
+    For real traffic analytics, use a free Google Analytics property rather than a custom tracker — it's more reliable and this page doesn't reinvent it.
+  </p>
+</section>
+
+<section id="legal">
+  <div class="section-head">
+    <div>
+      <span class="kicker">The fine print</span>
+      <h2>Terms & Privacy</h2>
+      <p>Plain-language starting points, not a substitute for a real lawyer reviewing your actual launch.</p>
+    </div>
+  </div>
+  <div class="inline-note" style="margin-bottom:24px;">
+    This isn't legal advice, and Claude isn't a lawyer. Have an actual attorney review this before real students rely on it — requirements vary by state and this is meant as a reasonable starting draft, not a finished policy.
+    <span id="legal-lang-note" hidden> This legal text is intentionally kept in English only — translating legal language inaccurately is a real risk, so this stays as the single authoritative version.</span>
+  </div>
+  <div class="market-wrap">
+    <div class="card" style="position:relative;">
+      <span class="tag">Terms of Service</span>
+      <h3 style="font-size:18px;margin-bottom:10px;">The short version</h3>
+      <ul class="perks-list">
+        <li>You must be 18 or older to create an account or use this service. We ask you to confirm this at sign-up — it's a self-attestation, not ID verification, and accounts found to be underage will be removed.</li>
+        <li>Syllabank is a listing board, not a party to any trade — buyers and sellers deal directly with each other and are responsible for their own transactions.</li>
+        <li>We don't verify that a listing's price, condition, or description is accurate — only that the poster has a real .edu email.</li>
+        <li>No payments are processed on this site. Nothing here handles or stores payment information.</li>
+        <li>Don't post anything illegal, fraudulent, or that isn't yours to sell.</li>
+        <li>Accounts or posts that get reported and confirmed as spam, scams, or fake may be removed at the owner's discretion.</li>
+        <li>This service is offered as-is, with no guarantee it will always be available or error-free.</li>
+      </ul>
+    </div>
+    <div class="card" style="position:relative;">
+      <span class="tag">Privacy</span>
+      <h3 style="font-size:18px;margin-bottom:10px;">What we collect & why</h3>
+      <ul class="perks-list">
+        <li id="privacy-login-method" data-i18n="privacy.loginMethodLink">No passwords are stored — you sign in with a one-time link sent to your email.</li>
+        <li>Your .edu email, to verify you're a student and let you log back in — never shown to other visitors.</li>
+        <li>Whatever you type into a listing, video, or report — visible to other visitors as described on this page.</li>
+        <li>Basic error logs (what broke, when) to fix bugs — no payment or government ID data is ever collected, because we don't ask for any.</li>
+        <li>Anonymous visit data (how many people visit, how long they stay) via Google Analytics — not tied to your name or email, used only to see whether the site is being used.</li>
+        <li>We don't sell your email or listing data to anyone.</li>
+        <li>Want your account and data deleted? Contact the site owner — until a self-serve option exists, it's a manual request.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Syllabank v3.4 — last updated September 14, 2026. Auto error-logging: on. <a href="#legal" style="color:inherit;text-decoration:underline;">Terms & Privacy</a></div>
+  <div>*U.S. average per College Board estimates, varies by school and year.</div>
+</footer>
+
+<script>
+(function(){
+
+  var SITE_VERSION = '3.4';
+
+  // ============ Translations ============
+  // Covers the core student-facing flow (nav, hero, marketplace, help,
+  // account, premium, essentials). Deliberately NOT translated: the Terms &
+  // Privacy legal text (translating legal language inaccurately is a real
+  // liability risk — it stays in English, authoritative version only) and
+  // Scholar Mode's major-based resource lists / challenge question banks
+  // (a large, separate body of dynamic content — flagged as follow-up work).
+  // Chosen languages reflect actual top non-English-medium sources of
+  // international students in the U.S. per IIE's Open Doors 2025 report
+  // (India, China, South Korea, Vietnam, plus Spanish aggregated across
+  // Mexico/Spain/Colombia/Peru) — not a generic guess.
+  var TRANSLATIONS = {
+    "nav.resources": {en:"Free & open", es:"Gratis y abierto", zh:"免费开放资源", hi:"मुफ़्त और खुला", ko:"무료 & 오픈", vi:"Miễn phí & mở"},
+    "nav.marketplace": {en:"Marketplace", es:"Mercado", zh:"交易市场", hi:"बाज़ार", ko:"마켓플레이스", vi:"Chợ trao đổi"},
+    "nav.help": {en:"Extra help", es:"Ayuda extra", zh:"额外帮助", hi:"अतिरिक्त सहायता", ko:"추가 도움", vi:"Trợ giúp thêm"},
+    "nav.scholar": {en:"Scholar Mode", es:"Modo Académico", zh:"学者模式", hi:"स्कॉलर मोड", ko:"스칼라 모드", vi:"Chế độ Học giả"},
+    "nav.premium": {en:"Syllabank+", es:"Syllabank+", zh:"Syllabank+", hi:"Syllabank+", ko:"Syllabank+", vi:"Syllabank+"},
+    "nav.essentials": {en:"Essentials", es:"Esenciales", zh:"校园必知", hi:"आवश्यक जानकारी", ko:"필수 정보", vi:"Thông tin cần thiết"},
+    "nav.legal": {en:"Terms & Privacy", es:"Términos y Privacidad", zh:"条款与隐私", hi:"नियम व गोपनीयता", ko:"약관 및 개인정보", vi:"Điều khoản & Quyền riêng tư"},
+    "nav.login": {en:"Log in", es:"Iniciar sesión", zh:"登录", hi:"लॉग इन करें", ko:"로그인", vi:"Đăng nhập"},
+    "nav.logout": {en:"Log out", es:"Cerrar sesión", zh:"退出登录", hi:"लॉग आउट", ko:"로그아웃", vi:"Đăng xuất"},
+
+    "hero.title": {en:"Your college already<br>paid for half these books.", es:"Tu universidad ya<br>pagó la mitad de estos libros.", zh:"你的大学<br>其实已经替这些书付过一半的钱了。", hi:"आपके कॉलेज ने पहले ही<br>इनमें से आधी किताबों की कीमत चुका दी है।", ko:"당신의 대학은 이미<br>이 책들 값의 절반을 냈습니다.", vi:"Trường của bạn đã<br>trả trước một nửa tiền cho những cuốn sách này rồi."},
+    "hero.lede": {en:"Type your school, see what's free, what other verified students are selling, and find extra-help videos for whatever class is kicking your butt.", es:"Escribe tu universidad y descubre qué es gratis, qué venden otros estudiantes verificados y encuentra videos de ayuda extra para esa clase que te está costando.", zh:"输入你的学校,看看有哪些免费资源、其他已验证学生在卖什么书,还能找到帮你搞定难课的辅导视频。", hi:"अपना कॉलेज लिखें और देखें क्या मुफ़्त है, अन्य सत्यापित छात्र क्या बेच रहे हैं, और जिस विषय में परेशानी हो रही है उसके लिए अतिरिक्त सहायता वीडियो खोजें।", ko:"학교를 입력하면 무료 자료, 다른 인증된 학생들이 판매 중인 책, 그리고 힘든 수업에 도움이 되는 추가 학습 영상을 찾을 수 있어요.", vi:"Gõ tên trường của bạn để xem tài liệu miễn phí, những gì sinh viên đã xác minh khác đang bán, và tìm video hỗ trợ cho môn học đang khiến bạn đau đầu."},
+    "hero.eduBadge": {en:".edu verified", es:"Verificado .edu", zh:".edu 已验证", hi:".edu सत्यापित", ko:".edu 인증됨", vi:"Đã xác minh .edu"},
+    "hero.statLabel": {en:"average savings", es:"ahorro promedio", zh:"平均节省金额", hi:"औसत बचत", ko:"평균 절약액", vi:"tiết kiệm trung bình"},
+    "hero.perYear": {en:"/yr", es:"/año", zh:"/年", hi:"/वर्ष", ko:"/년", vi:"/năm"},
+    "hero.stepone": {en:"Step one", es:"Paso uno", zh:"第一步", hi:"पहला चरण", ko:"1단계", vi:"Bước một"},
+    "hero.linkCollege": {en:"Link your college", es:"Vincula tu universidad", zh:"关联你的大学", hi:"अपना कॉलेज लिंक करें", ko:"학교 연결하기", vi:"Liên kết trường của bạn"},
+    "hero.typeSchool": {en:"Type your school — any school works", es:"Escribe tu universidad — cualquier institución funciona", zh:"输入你的学校 — 任何学校都可以", hi:"अपना स्कूल लिखें — कोई भी स्कूल काम करेगा", ko:"학교 이름을 입력하세요 — 어떤 학교든 가능합니다", vi:"Gõ tên trường của bạn — trường nào cũng được"},
+    "hero.schoolPlaceholder": {en:"e.g. University of Florida", es:"ej. Universidad de Florida", zh:"例如:佛罗里达大学", hi:"उदा. यूनिवर्सिटी ऑफ़ फ़्लोरिडा", ko:"예: 플로리다 대학교", vi:"vd: Đại học Florida"},
+    "hero.goButton": {en:"Go to my campus board", es:"Ir al tablero de mi campus", zh:"进入我的校园版块", hi:"मेरे कैंपस बोर्ड पर जाएं", ko:"내 캠퍼스 게시판으로 이동", vi:"Đến bảng tin trường tôi"},
+    "hero.browsingNote": {en:"Browsing is open to everyone. Posting requires a quick, free .edu email verification.", es:"Explorar está abierto para todos. Publicar requiere una verificación rápida y gratuita con tu correo .edu.", zh:"浏览对所有人开放。发布内容需要快速、免费地验证你的 .edu 邮箱。", hi:"ब्राउज़ करना सभी के लिए खुला है। पोस्ट करने के लिए एक त्वरित, मुफ़्त .edu ईमेल सत्यापन आवश्यक है।", ko:"둘러보기는 누구나 가능합니다. 게시하려면 빠르고 무료인 .edu 이메일 인증이 필요합니다.", vi:"Mọi người đều có thể xem miễn phí. Để đăng bài cần xác minh email .edu nhanh chóng và miễn phí."},
+
+    "quicklook.freeBadge": {en:"Free", es:"Gratis", zh:"免费", hi:"मुफ़्त", ko:"무료", vi:"Miễn phí"},
+    "quicklook.tradeBadge": {en:"Trade", es:"Intercambio", zh:"交易", hi:"अदला-बदली", ko:"거래", vi:"Trao đổi"},
+    "quicklook.helpBadge": {en:"Help", es:"Ayuda", zh:"帮助", hi:"सहायता", ko:"도움", vi:"Hỗ trợ"},
+    "quicklook.trustBadge": {en:"Trust", es:"Confianza", zh:"信任", hi:"भरोसा", ko:"신뢰", vi:"Tin cậy"},
+    "quicklook.textbooks": {en:"Free textbooks", es:"Libros de texto gratis", zh:"免费教科书", hi:"मुफ़्त पाठ्यपुस्तकें", ko:"무료 교재", vi:"Sách giáo trình miễn phí"},
+    "quicklook.textbooksDesc": {en:"Open, legal resources", es:"Recursos abiertos y legales", zh:"合法开放资源", hi:"खुले, वैध संसाधन", ko:"합법적인 오픈 리소스", vi:"Tài nguyên mở, hợp pháp"},
+    "quicklook.marketplace": {en:"Marketplace", es:"Mercado", zh:"交易市场", hi:"बाज़ार", ko:"마켓플레이스", vi:"Chợ trao đổi"},
+    "quicklook.marketplaceDesc": {en:"Buy and sell with real students", es:"Compra y vende con estudiantes reales", zh:"与真实学生买卖", hi:"असली छात्रों के साथ खरीदें-बेचें", ko:"실제 학생과 사고팔기", vi:"Mua bán với sinh viên thật"},
+    "quicklook.videos": {en:"Study videos", es:"Videos de estudio", zh:"学习视频", hi:"स्टडी वीडियो", ko:"학습 영상", vi:"Video học tập"},
+    "quicklook.videosDesc": {en:"Get unstuck on any topic", es:"Resuelve cualquier duda", zh:"任何主题都能搞定", hi:"किसी भी विषय में अटकना नहीं", ko:"어떤 주제든 막힘 없이", vi:"Gỡ rối bất kỳ chủ đề nào"},
+    "quicklook.verified": {en:"Verified", es:"Verificado", zh:"已验证", hi:"सत्यापित", ko:"인증됨", vi:"Đã xác minh"},
+    "quicklook.verifiedDesc": {en:"Real .edu accounts only", es:"Solo cuentas .edu reales", zh:"仅限真实 .edu 账号", hi:"केवल असली .edu खाते", ko:"실제 .edu 계정만", vi:"Chỉ tài khoản .edu thật"},
+    "resources.kicker": {en:"No cost, no gray areas", es:"Sin costo, sin zonas grises", zh:"零成本,无灰色地带", hi:"कोई लागत नहीं, कोई अस्पष्टता नहीं", ko:"비용 없음, 불법 없음", vi:"Không tốn phí, không mập mờ"},
+    "resources.title": {en:"Free & legally open textbooks", es:"Libros de texto gratuitos y legalmente abiertos", zh:"免费且合法开放的教科书", hi:"मुफ़्त और वैध रूप से खुली पाठ्यपुस्तकें", ko:"무료이면서 합법적으로 개방된 교재", vi:"Sách giáo trình miễn phí & mở hợp pháp"},
+    "resources.intro": {en:"Full courses' worth of material, openly licensed by the authors or held by your library — nothing here requires getting around a paywall.", es:"Material equivalente a cursos completos, con licencia abierta de los autores o disponible en tu biblioteca — nada aquí requiere evadir un muro de pago.", zh:"这里有整门课程所需的资料,均由作者开放授权或由你的图书馆提供 — 完全不需要绕过付费墙。", hi:"पूरे कोर्स जितनी सामग्री, लेखकों द्वारा खुले लाइसेंस के साथ या आपकी लाइब्रेरी में उपलब्ध — यहां किसी पेवॉल को बायपास करने की ज़रूरत नहीं है।", ko:"저자가 직접 오픈 라이선스로 공개했거나 도서관에 소장된, 강의 전체 분량의 자료입니다 — 유료 장벽을 우회할 필요가 전혀 없습니다.", vi:"Đủ tài liệu cho cả khóa học, được tác giả cấp phép mở hoặc có sẵn tại thư viện của bạn — không cần phải lách qua bức tường phí nào cả."},
+    "resources.badge.open": {en:"Open license", es:"Licencia abierta", zh:"开放授权", hi:"ओपन लाइसेंस", ko:"오픈 라이선스", vi:"Cấp phép mở"},
+    "resources.badge.tuition": {en:"Your tuition", es:"Tu matrícula", zh:"你的学费", hi:"आपकी फ़ीस", ko:"등록금에 포함", vi:"Học phí của bạn"},
+    "resources.badge.low": {en:"Low cost", es:"Bajo costo", zh:"低成本", hi:"कम लागत", ko:"저비용", vi:"Chi phí thấp"},
+    "resources.badge.public": {en:"Public domain", es:"Dominio público", zh:"公共领域", hi:"सार्वजनिक डोमेन", ko:"퍼블릭 도메인", vi:"Miễn phí bản quyền"},
+    "resources.openstax": {en:"Peer-reviewed, full-length textbooks for intro courses — bio, calc, psych, econ, and more — free to read online or download as a PDF.", es:"Libros de texto completos y revisados por pares para cursos introductorios — biología, cálculo, psicología, economía y más — gratis para leer en línea o descargar en PDF.", zh:"面向入门课程的同行评审全长教科书,涵盖生物、微积分、心理学、经济学等 — 可免费在线阅读或下载 PDF。", hi:"परिचयात्मक कोर्स के लिए पीयर-रिव्यूड, पूर्ण पाठ्यपुस्तकें — जीव विज्ञान, कैलकुलस, मनोविज्ञान, अर्थशास्त्र और अधिक — ऑनलाइन पढ़ने या पीडीएफ़ डाउनलोड करने हेतु मुफ़्त।", ko:"입문 과목용 동료 심사를 거친 전체 분량 교재 — 생물, 미적분, 심리학, 경제학 등 — 온라인으로 무료로 읽거나 PDF로 다운로드할 수 있습니다.", vi:"Sách giáo trình đầy đủ, được bình duyệt cho các môn nhập môn — sinh học, giải tích, tâm lý học, kinh tế và hơn thế nữa — đọc online hoặc tải PDF miễn phí."},
+    "resources.otl": {en:"A searchable catalog of hundreds of openly licensed college textbooks, reviewed by faculty for classroom use.", es:"Un catálogo con búsqueda de cientos de libros de texto universitarios de licencia abierta, revisados por profesores para uso en clase.", zh:"一个可搜索的目录,收录数百本开放授权的大学教科书,均经教师审核适用于课堂教学。", hi:"सैकड़ों ओपन-लाइसेंस कॉलेज पाठ्यपुस्तकों की एक खोजने योग्य सूची, जिन्हें कक्षा में उपयोग हेतु शिक्षकों द्वारा समीक्षित किया गया है।", ko:"수백 종의 오픈 라이선스 대학 교재를 검색할 수 있는 카탈로그로, 교수진이 수업 활용을 위해 검토했습니다.", vi:"Danh mục có thể tra cứu với hàng trăm sách giáo trình đại học cấp phép mở, được giảng viên đánh giá để sử dụng trong lớp học."},
+    "resources.libretexts": {en:"Open-source textbooks and course material across the sciences, math, humanities, and social sciences.", es:"Libros de texto y material de curso de código abierto en ciencias, matemáticas, humanidades y ciencias sociales.", zh:"涵盖理科、数学、人文学科和社会科学的开源教科书及课程资料。", hi:"विज्ञान, गणित, मानविकी और सामाजिक विज्ञान में ओपन-सोर्स पाठ्यपुस्तकें और कोर्स सामग्री।", ko:"과학, 수학, 인문학, 사회과학 전반의 오픈소스 교재 및 강의 자료.", vi:"Sách giáo trình và tài liệu môn học mã nguồn mở thuộc các ngành khoa học, toán học, nhân văn và khoa học xã hội."},
+    "resources.reservesTitle": {en:"Library course reserves", es:"Reservas de curso en la biblioteca", zh:"图书馆课程指定参考书", hi:"लाइब्रेरी कोर्स रिज़र्व", ko:"도서관 강의 지정도서", vi:"Sách dự trữ theo môn học tại thư viện"},
+    "resources.reserves": {en:"Most campus libraries keep a physical or scanned copy of assigned texts on reserve, free to borrow for a few hours at a time.", es:"La mayoría de las bibliotecas del campus guardan una copia física o escaneada de los textos asignados, disponible para préstamo gratuito por unas horas.", zh:"大多数校园图书馆都会保留指定教材的纸质或扫描版本,可免费借阅几个小时。", hi:"अधिकतर कैंपस लाइब्रेरी में निर्धारित पाठ्यपुस्तकों की भौतिक या स्कैन की गई प्रति रिज़र्व में रहती है, जिसे कुछ घंटों के लिए मुफ़्त उधार लिया जा सकता है।", ko:"대부분의 캠퍼스 도서관은 지정 교재의 실물 또는 스캔본을 비치해두며, 몇 시간 동안 무료로 대출할 수 있습니다.", vi:"Hầu hết thư viện trường đều giữ bản in hoặc bản scan của giáo trình bắt buộc để mượn miễn phí trong vài giờ."},
+    "resources.reservesLink": {en:"See how to find it →", es:"Ver cómo encontrarlo →", zh:"查看查找方法 →", hi:"इसे कैसे खोजें देखें →", ko:"찾는 방법 보기 →", vi:"Xem cách tìm →"},
+    "resources.rentalTitle": {en:"Rental marketplaces", es:"Mercados de alquiler", zh:"租赁平台", hi:"किराया बाज़ार", ko:"대여 마켓", vi:"Thị trường cho thuê sách"},
+    "resources.rental": {en:"Chegg, Amazon Textbook Rentals, and campus bookstore rental programs run 60–80% cheaper than buying new.", es:"Chegg, Amazon Textbook Rentals y los programas de alquiler de la librería del campus cuestan entre 60% y 80% menos que comprar nuevo.", zh:"Chegg、亚马逊教材租赁以及校园书店的租赁项目,比购买新书便宜 60%–80%。", hi:"Chegg, Amazon Textbook Rentals और कैंपस बुकस्टोर की किराया योजनाएं नई किताब खरीदने से 60–80% सस्ती पड़ती हैं।", ko:"Chegg, 아마존 교재 대여, 캠퍼스 서점 대여 프로그램은 새 책 구매보다 60~80% 저렴합니다.", vi:"Chegg, Amazon Textbook Rentals và các chương trình thuê sách tại nhà sách trường rẻ hơn 60–80% so với mua mới."},
+    "resources.rentalLink": {en:"Compare rentals →", es:"Comparar alquileres →", zh:"比较租赁价格 →", hi:"किराया तुलना करें →", ko:"대여 비교하기 →", vi:"So sánh giá thuê →"},
+    "resources.gutenberg": {en:"70,000+ free ebooks — strong for lit, philosophy, and classics courses where the assigned edition is old enough to be public domain.", es:"Más de 70,000 libros electrónicos gratuitos — ideal para cursos de literatura, filosofía y clásicos cuando la edición asignada ya es de dominio público.", zh:"超过 70,000 本免费电子书 — 非常适合文学、哲学和经典课程,只要指定版本已属于公共领域。", hi:"70,000+ मुफ़्त ई-बुक्स — साहित्य, दर्शनशास्त्र और क्लासिक्स कोर्स के लिए बेहतरीन, जहां निर्धारित संस्करण सार्वजनिक डोमेन जितना पुराना हो।", ko:"7만 권 이상의 무료 전자책 — 지정 판본이 퍼블릭 도메인에 속할 만큼 오래된 문학, 철학, 고전 과목에 특히 유용합니다.", vi:"Hơn 70.000 sách điện tử miễn phí — rất hữu ích cho các môn văn học, triết học và tác phẩm kinh điển khi ấn bản được giao đã đủ cũ để thuộc phạm vi công cộng."},
+
+    "market.kicker": {en:"Student to student", es:"De estudiante a estudiante", zh:"学生之间", hi:"छात्र से छात्र", ko:"학생 간 거래", vi:"Sinh viên với sinh viên"},
+    "market.title": {en:"Buy, sell, or trade on your campus", es:"Compra, vende o intercambia en tu campus", zh:"在你的校园里买卖或交换", hi:"अपने कैंपस में खरीदें, बेचें या अदला-बदली करें", ko:"캠퍼스에서 사고 팔고 교환하기", vi:"Mua, bán hoặc trao đổi ngay tại trường bạn"},
+    "market.intro": {en:"Shared live with everyone. Posting requires a verified .edu account, so every listing is tied to a real student — not anonymous spam.", es:"Compartido en vivo con todos. Publicar requiere una cuenta .edu verificada, así que cada anuncio está vinculado a un estudiante real — no es spam anónimo.", zh:"实时向所有人共享。发布内容需要已验证的 .edu 账号,因此每条信息都对应一名真实学生 — 而非匿名垃圾信息。", hi:"सभी के साथ लाइव साझा किया गया। पोस्ट करने के लिए सत्यापित .edu खाता आवश्यक है, इसलिए हर लिस्टिंग एक वास्तविक छात्र से जुड़ी होती है — गुमनाम स्पैम नहीं।", ko:"모든 사용자와 실시간으로 공유됩니다. 게시하려면 인증된 .edu 계정이 필요하므로, 모든 게시물은 실제 학생과 연결되어 있습니다 — 익명 스팸이 아닙니다.", vi:"Chia sẻ trực tiếp với mọi người. Để đăng bài cần có tài khoản .edu đã xác minh, vì vậy mỗi tin đăng đều gắn với một sinh viên có thật — không phải spam ẩn danh."},
+    "market.safety": {en:"<b>Meeting up:</b> trade in a public campus spot — a library lobby, student union, or dining hall — and bring a friend if you can. Many campuses also have a safety escort service; check with campus police/security if you'd rather not meet alone. Syllabank isn't part of the trade itself and can't guarantee any listing — a verified email confirms someone's a real student at that school, not that the item or price is as described.", es:"<b>Para encontrarse:</b> haz el intercambio en un lugar público del campus — el vestíbulo de la biblioteca, el centro estudiantil o el comedor — y lleva a un amigo si puedes. Muchos campus también tienen un servicio de acompañamiento de seguridad; consulta con la policía/seguridad del campus si prefieres no ir solo. Syllabank no forma parte del intercambio y no puede garantizar ningún anuncio — un correo verificado confirma que alguien es un estudiante real de esa escuela, no que el artículo o el precio sean como se describen.", zh:"<b>见面交易:</b>请在校园公共场所进行 — 例如图书馆大厅、学生活动中心或食堂 — 并尽量带一位朋友同行。许多校园也提供安全护送服务;如果不想独自见面,可联系校园警察/保卫处。Syllabank 并非交易的一方,也无法为任何信息作担保 — 已验证邮箱只能确认对方是该校的真实学生,并不能确认商品或价格描述属实。", hi:"<b>मिलना:</b> कैंपस के किसी सार्वजनिक स्थान पर लेन-देन करें — जैसे लाइब्रेरी लॉबी, स्टूडेंट यूनियन या डाइनिंग हॉल — और यदि संभव हो तो किसी दोस्त को साथ लाएं। कई कैंपस में सुरक्षा एस्कॉर्ट सेवा भी होती है; अकेले न मिलना चाहें तो कैंपस पुलिस/सुरक्षा से संपर्क करें। Syllabank लेन-देन का हिस्सा नहीं है और किसी भी लिस्टिंग की गारंटी नहीं देता — सत्यापित ईमेल केवल यह पुष्टि करता है कि व्यक्ति उस स्कूल का वास्तविक छात्र है, यह नहीं कि वस्तु या कीमत विवरण के अनुसार ही है।", ko:"<b>만나서 거래하기:</b> 도서관 로비, 학생회관, 학생식당 등 캠퍼스 내 공개된 장소에서 거래하고, 가능하면 친구와 함께 가세요. 많은 캠퍼스에 안전 동행 서비스가 있으니, 혼자 만나기 꺼려진다면 캠퍼스 경찰/보안팀에 문의하세요. Syllabank는 거래 당사자가 아니며 어떤 게시물도 보증하지 않습니다 — 인증된 이메일은 상대가 해당 학교의 실제 학생임을 확인해줄 뿐, 물품이나 가격 설명이 정확함을 보장하지는 않습니다.", vi:"<b>Gặp mặt trao đổi:</b> hãy giao dịch ở nơi công cộng trong khuôn viên trường — sảnh thư viện, trung tâm sinh viên hoặc nhà ăn — và rủ theo một người bạn nếu có thể. Nhiều trường cũng có dịch vụ hộ tống an toàn; hãy liên hệ cảnh sát/an ninh trường nếu bạn không muốn gặp một mình. Syllabank không phải là một bên trong giao dịch và không thể đảm bảo cho bất kỳ tin đăng nào — email đã xác minh chỉ xác nhận đó là sinh viên thật của trường, không xác nhận món hàng hay giá cả đúng như mô tả."},
+    "market.postTag": {en:"Post a listing", es:"Publica un anuncio", zh:"发布信息", hi:"लिस्टिंग पोस्ट करें", ko:"게시물 등록", vi:"Đăng tin"},
+    "market.sellTitle": {en:"Sell or trade a book", es:"Vende o intercambia un libro", zh:"出售或交换书籍", hi:"किताब बेचें या बदलें", ko:"책 판매 또는 교환", vi:"Bán hoặc trao đổi sách"},
+    "market.needVerify": {en:"You need a verified .edu account to post. It takes under a minute.", es:"Necesitas una cuenta .edu verificada para publicar. Toma menos de un minuto.", zh:"发布信息需要已验证的 .edu 账号,验证不到一分钟即可完成。", hi:"पोस्ट करने के लिए सत्यापित .edu खाता आवश्यक है। इसमें एक मिनट से भी कम समय लगता है।", ko:"게시하려면 인증된 .edu 계정이 필요합니다. 1분도 채 걸리지 않습니다.", vi:"Bạn cần tài khoản .edu đã xác minh để đăng bài. Việc này mất chưa đến một phút."},
+    "market.verifyLink": {en:"Verify my email →", es:"Verificar mi correo →", zh:"验证我的邮箱 →", hi:"मेरा ईमेल सत्यापित करें →", ko:"이메일 인증하기 →", vi:"Xác minh email của tôi →"},
+    "market.yourCollege": {en:"Your college", es:"Tu universidad", zh:"你的大学", hi:"आपका कॉलेज", ko:"내 학교", vi:"Trường của bạn"},
+    "market.typeSchoolPh": {en:"Type your school", es:"Escribe tu universidad", zh:"输入你的学校", hi:"अपना स्कूल लिखें", ko:"학교 이름 입력", vi:"Gõ tên trường của bạn"},
+    "market.bookTitle": {en:"Book title", es:"Título del libro", zh:"书名", hi:"किताब का शीर्षक", ko:"책 제목", vi:"Tên sách"},
+    "market.bookTitlePh": {en:"e.g. Campbell Biology, 12th ed.", es:"ej. Campbell Biology, 12.ª ed.", zh:"例如:Campbell Biology 第12版", hi:"उदा. Campbell Biology, 12वां संस्करण", ko:"예: Campbell Biology, 12판", vi:"vd: Campbell Biology, ấn bản 12"},
+    "market.courseCode": {en:"Course code (optional)", es:"Código del curso (opcional)", zh:"课程代码(可选)", hi:"कोर्स कोड (वैकल्पिक)", ko:"과목 코드 (선택 사항)", vi:"Mã môn học (không bắt buộc)"},
+    "market.isbn": {en:"ISBN (optional)", es:"ISBN (opcional)", zh:"ISBN(可选)", hi:"ISBN (वैकल्पिक)", ko:"ISBN (선택 사항)", vi:"ISBN (không bắt buộc)"},
+    "market.checkPrice": {en:"Check fair price", es:"Consultar precio justo", zh:"查看合理价格", hi:"उचित मूल्य जांचें", ko:"적정 가격 확인", vi:"Kiểm tra giá hợp lý"},
+    "market.price": {en:"Price ($)", es:"Precio ($)", zh:"价格(美元)", hi:"कीमत ($)", ko:"가격 ($)", vi:"Giá ($)"},
+    "market.contact": {en:"How to reach you", es:"Cómo contactarte", zh:"联系方式", hi:"आपसे संपर्क कैसे करें", ko:"연락 방법", vi:"Cách liên hệ với bạn"},
+    "market.contactPh": {en:"email or handle", es:"correo o usuario", zh:"邮箱或联系方式", hi:"ईमेल या हैंडल", ko:"이메일 또는 아이디", vi:"email hoặc tên liên hệ"},
+    "market.postBtn": {en:"Post listing", es:"Publicar anuncio", zh:"发布信息", hi:"लिस्टिंग पोस्ट करें", ko:"게시물 등록", vi:"Đăng tin"},
+    "market.shareBtn": {en:"Share to your class group chat", es:"Compartir en el chat de tu clase", zh:"分享到你的班级群聊", hi:"अपने क्लास ग्रुप चैट में शेयर करें", ko:"수업 단톡방에 공유하기", vi:"Chia sẻ vào nhóm chat lớp bạn"},
+    "market.confirmBought": {en:"I bought this", es:"Yo compré esto", zh:"我买了这个", hi:"मैंने यह खरीदा", ko:"제가 구매했어요", vi:"Tôi đã mua món này"},
+    "market.confirmedTrades": {en:"confirmed trades", es:"intercambios confirmados", zh:"次确认交易", hi:"पुष्ट लेन-देन", ko:"건 확인된 거래", vi:"giao dịch đã xác nhận"},
+    "market.listingsFor": {en:"Listings for:", es:"Anuncios para:", zh:"信息来自:", hi:"लिस्टिंग्स:", ko:"게시물 대상:", vi:"Tin đăng cho:"},
+    "market.noSchool": {en:"no school linked yet", es:"aún no hay universidad vinculada", zh:"尚未关联学校", hi:"अभी कोई स्कूल लिंक नहीं है", ko:"아직 연결된 학교 없음", vi:"chưa liên kết trường nào"},
+    "market.refresh": {en:"Refresh", es:"Actualizar", zh:"刷新", hi:"रीफ़्रेश करें", ko:"새로고침", vi:"Làm mới"},
+    "market.watchPh": {en:"Watch a course code, e.g. BIOL 101", es:"Sigue un código de curso, ej. BIOL 101", zh:"关注课程代码,例如 BIOL 101", hi:"कोर्स कोड फॉलो करें, उदा. BIOL 101", ko:"과목 코드 관심 등록, 예: BIOL 101", vi:"Theo dõi mã môn học, vd: BIOL 101"},
+    "market.watchBtn": {en:"Watch", es:"Seguir", zh:"关注", hi:"फॉलो करें", ko:"관심 등록", vi:"Theo dõi"},
+    "market.linkFirst": {en:"Link your college above to load its listings.", es:"Vincula tu universidad arriba para cargar sus anuncios.", zh:"请先在上方关联你的学校以加载相关信息。", hi:"इसकी लिस्टिंग लोड करने के लिए ऊपर अपना कॉलेज लिंक करें।", ko:"위에서 학교를 연결하면 게시물을 불러올 수 있습니다.", vi:"Liên kết trường của bạn ở trên để tải danh sách tin đăng."},
+
+    "help.kicker": {en:"Stuck on something?", es:"¿Atorado con algo?", zh:"遇到难题了吗?", hi:"किसी विषय में अटके हैं?", ko:"막히는 부분이 있나요?", vi:"Đang gặp khó khăn với bài học?"},
+    "help.title": {en:"Search a topic, find extra-help videos", es:"Busca un tema, encuentra videos de ayuda extra", zh:"搜索主题,找到额外辅导视频", hi:"किसी विषय को खोजें, अतिरिक्त सहायता वीडियो पाएं", ko:"주제를 검색하고 추가 학습 영상을 찾아보세요", vi:"Tìm chủ đề, xem video hỗ trợ thêm"},
+    "help.intro": {en:"Search any subject. Verified students can add a video they found helpful — YouTube links play right here.", es:"Busca cualquier materia. Los estudiantes verificados pueden agregar un video que les haya sido útil — los enlaces de YouTube se reproducen aquí mismo.", zh:"可搜索任意科目。已验证学生可以添加自己觉得有用的视频 — YouTube 链接可直接在此播放。", hi:"किसी भी विषय को खोजें। सत्यापित छात्र कोई सहायक वीडियो जोड़ सकते हैं — YouTube लिंक यहीं चलेंगे।", ko:"어떤 과목이든 검색해보세요. 인증된 학생들은 도움이 되었던 영상을 추가할 수 있으며, 유튜브 링크는 여기서 바로 재생됩니다.", vi:"Tìm kiếm bất kỳ môn học nào. Sinh viên đã xác minh có thể thêm video họ thấy hữu ích — liên kết YouTube sẽ phát ngay tại đây."},
+    "help.addTag": {en:"Add a video", es:"Agregar un video", zh:"添加视频", hi:"वीडियो जोड़ें", ko:"영상 추가", vi:"Thêm video"},
+    "help.helpOut": {en:"Help someone out", es:"Ayuda a alguien", zh:"帮助其他同学", hi:"किसी की मदद करें", ko:"다른 학생 돕기", vi:"Giúp đỡ ai đó"},
+    "help.needVerify": {en:"Verify your .edu email to add a video.", es:"Verifica tu correo .edu para agregar un video.", zh:"验证你的 .edu 邮箱后即可添加视频。", hi:"वीडियो जोड़ने के लिए अपना .edu ईमेल सत्यापित करें।", ko:"영상을 추가하려면 .edu 이메일을 인증하세요.", vi:"Xác minh email .edu của bạn để thêm video."},
+    "help.topic": {en:"Topic", es:"Tema", zh:"主题", hi:"विषय", ko:"주제", vi:"Chủ đề"},
+    "help.topicPh": {en:"e.g. Organic Chemistry, MLA citations", es:"ej. Química Orgánica, citas MLA", zh:"例如:有机化学、MLA引用格式", hi:"उदा. ऑर्गेनिक केमिस्ट्री, MLA उद्धरण", ko:"예: 유기화학, MLA 인용법", vi:"vd: Hóa hữu cơ, trích dẫn MLA"},
+    "help.videoTitle": {en:"Video title", es:"Título del video", zh:"视频标题", hi:"वीडियो शीर्षक", ko:"영상 제목", vi:"Tiêu đề video"},
+    "help.videoTitlePh": {en:"e.g. SN1 vs SN2 explained simply", es:"ej. SN1 vs SN2 explicado fácil", zh:"例如:SN1 与 SN2 简明讲解", hi:"उदा. SN1 बनाम SN2 आसान भाषा में", ko:"예: SN1 vs SN2 쉽게 설명", vi:"vd: Giải thích đơn giản SN1 và SN2"},
+    "help.videoLink": {en:"Video link", es:"Enlace del video", zh:"视频链接", hi:"वीडियो लिंक", ko:"영상 링크", vi:"Liên kết video"},
+    "help.why": {en:"Why it helped (optional)", es:"Por qué te ayudó (opcional)", zh:"为什么有帮助(可选)", hi:"इससे कैसे मदद मिली (वैकल्पिक)", ko:"왜 도움이 되었나요 (선택 사항)", vi:"Vì sao nó hữu ích (không bắt buộc)"},
+    "help.whyPh": {en:"e.g. finally made the mechanism click for me", es:"ej. por fin entendí el mecanismo", zh:"例如:终于让我理解了这个机制", hi:"उदा. आख़िरकार यह मैकेनिज़्म समझ आ गया", ko:"예: 드디어 메커니즘이 이해됐어요", vi:"vd: cuối cùng tôi cũng hiểu được cơ chế này"},
+    "help.addBtn": {en:"Add video", es:"Agregar video", zh:"添加视频", hi:"वीडियो जोड़ें", ko:"영상 추가", vi:"Thêm video"},
+    "help.searchTopic": {en:"Search a topic", es:"Buscar un tema", zh:"搜索主题", hi:"विषय खोजें", ko:"주제 검색", vi:"Tìm chủ đề"},
+    "help.searchPh": {en:"e.g. Calculus, Essay writing", es:"ej. Cálculo, redacción de ensayos", zh:"例如:微积分、论文写作", hi:"उदा. कैलकुलस, निबंध लेखन", ko:"예: 미적분, 에세이 작성", vi:"vd: Giải tích, viết luận"},
+    "help.searchBtn": {en:"Search", es:"Buscar", zh:"搜索", hi:"खोजें", ko:"검색", vi:"Tìm kiếm"},
+    "help.videosFor": {en:"Videos for:", es:"Videos para:", zh:"视频主题:", hi:"वीडियो:", ko:"영상 대상:", vi:"Video cho:"},
+    "help.noTopic": {en:"no topic searched yet", es:"aún no se ha buscado ningún tema", zh:"尚未搜索任何主题", hi:"अभी कोई विषय खोजा नहीं गया", ko:"아직 검색한 주제 없음", vi:"chưa tìm chủ đề nào"},
+    "help.searchFirst": {en:"Search a topic above to see videos other students have added.", es:"Busca un tema arriba para ver los videos que otros estudiantes han agregado.", zh:"请先在上方搜索主题,即可查看其他学生添加的视频。", hi:"अन्य छात्रों द्वारा जोड़े गए वीडियो देखने के लिए ऊपर एक विषय खोजें।", ko:"위에서 주제를 검색하면 다른 학생들이 추가한 영상을 볼 수 있습니다.", vi:"Tìm một chủ đề ở trên để xem video mà các sinh viên khác đã thêm."},
+
+    "essentials.kicker": {en:"Beyond textbooks", es:"Más allá de los libros", zh:"教科书之外", hi:"पाठ्यपुस्तकों से आगे", ko:"교재 그 이상", vi:"Ngoài sách giáo trình"},
+    "essentials.title": {en:"Campus essentials worth knowing", es:"Recursos esenciales del campus que vale la pena conocer", zh:"值得了解的校园必备资源", hi:"जानने योग्य कैंपस की ज़रूरी जानकारी", ko:"알아두면 좋은 캠퍼스 필수 정보", vi:"Những điều thiết yếu về trường đáng biết"},
+    "essentials.intro": {en:"The offices and programs most students don't find out about until sophomore year.", es:"Las oficinas y programas que la mayoría de los estudiantes no descubre hasta segundo año.", zh:"大多数学生要到大二才会发现的办公室和项目。", hi:"वे कार्यालय और कार्यक्रम जिनके बारे में अधिकांश छात्रों को द्वितीय वर्ष तक पता ही नहीं चलता।", ko:"대부분의 학생들이 2학년이 되어서야 알게 되는 부서와 프로그램들입니다.", vi:"Các văn phòng và chương trình mà hầu hết sinh viên chỉ biết đến khi đã lên năm hai."},
+    "essentials.aid": {en:"Financial aid office", es:"Oficina de ayuda financiera", zh:"财务资助办公室", hi:"वित्तीय सहायता कार्यालय", ko:"재정 지원 사무실", vi:"Văn phòng hỗ trợ tài chính"},
+    "essentials.aidDesc": {en:"Ask about a \"textbook scholarship\" or \"book voucher\" fund specifically.", es:"Pregunta específicamente por una \"beca para libros de texto\" o un fondo de \"vale de libros\".", zh:"请专门询问是否有\"教材奖学金\"或\"图书代金券\"基金。", hi:"विशेष रूप से \"टेक्स्टबुक स्कॉलरशिप\" या \"बुक वाउचर\" फंड के बारे में पूछें।", ko:"\"교재 장학금\" 또는 \"도서 바우처\" 기금이 있는지 구체적으로 문의해보세요.", vi:"Hãy hỏi cụ thể về quỹ \"học bổng sách giáo trình\" hoặc \"phiếu mua sách\"."},
+    "essentials.pantry": {en:"Food pantry", es:"Despensa de alimentos", zh:"食物储藏室", hi:"फ़ूड पैंट्री", ko:"푸드 팬트리(무료 식료품)", vi:"Kho thực phẩm hỗ trợ"},
+    "essentials.pantryDesc": {en:"Most campuses run one now, usually through student affairs — no proof of need required at most.", es:"La mayoría de los campus tienen una ahora, generalmente a través de asuntos estudiantiles — la mayoría no requiere comprobar necesidad.", zh:"如今大多数校园都设有此类服务,通常由学生事务处负责 — 大多数无需提供经济困难证明。", hi:"अब अधिकतर कैंपस में यह सुविधा होती है, आमतौर पर स्टूडेंट अफेयर्स के माध्यम से — ज़्यादातर जगह ज़रूरत साबित करने की आवश्यकता नहीं होती।", ko:"대부분의 캠퍼스에 학생처를 통해 운영되며, 대개 필요성을 증명할 필요 없이 이용할 수 있습니다.", vi:"Hầu hết các trường hiện đều có dịch vụ này, thường qua phòng công tác sinh viên — đa số không yêu cầu chứng minh nhu cầu."},
+    "essentials.tutoring": {en:"Tutoring & writing center", es:"Centro de tutorías y escritura", zh:"辅导与写作中心", hi:"ट्यूटरिंग व राइटिंग सेंटर", ko:"튜터링 & 글쓰기 센터", vi:"Trung tâm hỗ trợ học tập & viết luận"},
+    "essentials.tutoringDesc": {en:"Free, tuition-funded, and often under-used.", es:"Gratis, financiado por la matrícula y a menudo poco utilizado.", zh:"免费,由学费资助,但常常被忽视。", hi:"मुफ़्त, ट्यूशन-फंडेड, और अक्सर कम उपयोग किया जाता है।", ko:"등록금으로 운영되는 무료 서비스이지만 의외로 잘 활용되지 않습니다.", vi:"Miễn phí, được tài trợ từ học phí, và thường ít được sử dụng."},
+    "essentials.registrar": {en:"Registrar", es:"Oficina del registrador", zh:"教务处", hi:"रजिस्ट्रार", ko:"학적과", vi:"Phòng đào tạo"},
+    "essentials.registrarDesc": {en:"Confirms your exact required edition before you buy anything.", es:"Confirma la edición exacta requerida antes de comprar nada.", zh:"购买前请先确认所需的确切版本。", hi:"कुछ भी खरीदने से पहले आपके लिए आवश्यक सटीक संस्करण की पुष्टि करता है।", ko:"구매 전 정확히 필요한 판본을 확인해줍니다.", vi:"Xác nhận đúng ấn bản bạn cần trước khi mua bất cứ thứ gì."},
+    "essentials.disability": {en:"Disability / accessibility services", es:"Servicios de discapacidad / accesibilidad", zh:"残障/无障碍服务", hi:"दिव्यांगता / सुगम्यता सेवाएं", ko:"장애/접근성 지원 서비스", vi:"Dịch vụ hỗ trợ khuyết tật / tiếp cận"},
+    "essentials.disabilityDesc": {en:"Can provide accessible digital textbook formats at no cost if you qualify.", es:"Puede ofrecer formatos digitales accesibles de libros de texto sin costo si calificas.", zh:"如符合条件,可免费提供无障碍数字教材格式。", hi:"यदि आप योग्य हैं तो निःशुल्क सुगम्य डिजिटल पाठ्यपुस्तक प्रारूप प्रदान कर सकता है।", ko:"자격 요건을 충족하면 무료로 접근성이 개선된 디지털 교재 형식을 제공받을 수 있습니다.", vi:"Có thể cung cấp miễn phí định dạng sách giáo trình điện tử dễ tiếp cận nếu bạn đủ điều kiện."},
+
+    "account.kicker": {en:"Verified student account", es:"Cuenta de estudiante verificada", zh:"已验证学生账号", hi:"सत्यापित छात्र खाता", ko:"인증된 학생 계정", vi:"Tài khoản sinh viên đã xác minh"},
+    "account.title": {en:"Log in / verify your .edu email", es:"Inicia sesión / verifica tu correo .edu", zh:"登录/验证你的 .edu 邮箱", hi:"लॉग इन करें / अपना .edu ईमेल सत्यापित करें", ko:"로그인 / .edu 이메일 인증", vi:"Đăng nhập / xác minh email .edu của bạn"},
+    "account.introCode": {en:"No password to remember — we email you a 6-digit code. This is what keeps postings tied to a real person instead of anonymous spam.", es:"No hay contraseña que recordar — te enviamos un código de 6 dígitos por correo. Esto es lo que mantiene las publicaciones vinculadas a una persona real y no a spam anónimo.", zh:"无需记住密码 — 我们会给你发送一个6位数验证码。这就是为什么每条发布内容都能对应到真实的人,而不是匿名垃圾信息。", hi:"याद रखने के लिए कोई पासवर्ड नहीं — हम आपको एक 6-अंकों का कोड ईमेल करते हैं। यही चीज़ पोस्ट को गुमनाम स्पैम की बजाय एक वास्तविक व्यक्ति से जोड़े रखती है।", ko:"기억할 비밀번호가 없습니다 — 6자리 코드를 이메일로 보내드립니다. 이 방식 덕분에 게시물이 익명 스팸이 아닌 실제 사람과 연결됩니다.", vi:"Không cần nhớ mật khẩu — chúng tôi sẽ gửi cho bạn mã 6 chữ số qua email. Đây là cách giữ cho các bài đăng luôn gắn với một người thật, không phải spam ẩn danh."},
+    "account.introLink": {en:"No password to remember — we email you a one-time sign-in link. This is what keeps postings tied to a real person instead of anonymous spam.", es:"No hay contraseña que recordar — te enviamos un enlace de acceso único por correo. Esto es lo que mantiene las publicaciones vinculadas a una persona real y no a spam anónimo.", zh:"无需记住密码 — 我们会给你发送一次性登录链接。这就是为什么每条发布内容都能对应到真实的人,而不是匿名垃圾信息。", hi:"याद रखने के लिए कोई पासवर्ड नहीं — हम आपको एक बार उपयोग होने वाला साइन-इन लिंक ईमेल करते हैं। यही चीज़ पोस्ट को गुमनाम स्पैम की बजाय एक वास्तविक व्यक्ति से जोड़े रखती है।", ko:"기억할 비밀번호가 없습니다 — 1회용 로그인 링크를 이메일로 보내드립니다. 이 방식 덕분에 게시물이 익명 스팸이 아닌 실제 사람과 연결됩니다.", vi:"Không cần nhớ mật khẩu — chúng tôi sẽ gửi cho bạn một liên kết đăng nhập dùng một lần qua email. Đây là cách giữ cho các bài đăng luôn gắn với một người thật, không phải spam ẩn danh."},
+    "privacy.loginMethodCode": {en:"No passwords are stored — you sign in with a one-time 6-digit code sent to your email.", es:"No se almacenan contraseñas — inicias sesión con un código de 6 dígitos de un solo uso enviado a tu correo.", zh:"我们不存储密码 — 你通过发送到邮箱的一次性6位验证码登录。", hi:"कोई पासवर्ड संग्रहीत नहीं किया जाता — आप अपने ईमेल पर भेजे गए एक बार के 6-अंकों के कोड से साइन इन करते हैं।", ko:"비밀번호는 저장되지 않습니다 — 이메일로 전송된 1회용 6자리 코드로 로그인합니다.", vi:"Không có mật khẩu nào được lưu trữ — bạn đăng nhập bằng mã 6 chữ số dùng một lần được gửi đến email của bạn."},
+    "privacy.loginMethodLink": {en:"No passwords are stored — you sign in with a one-time link sent to your email.", es:"No se almacenan contraseñas — inicias sesión con un enlace de un solo uso enviado a tu correo.", zh:"我们不存储密码 — 你通过发送到邮箱的一次性链接登录。", hi:"कोई पासवर्ड संग्रहीत नहीं किया जाता — आप अपने ईमेल पर भेजे गए एक बार के लिंक से साइन इन करते हैं।", ko:"비밀번호는 저장되지 않습니다 — 이메일로 전송된 1회용 링크로 로그인합니다.", vi:"Không có mật khẩu nào được lưu trữ — bạn đăng nhập bằng một liên kết dùng một lần được gửi đến email của bạn."},
+    "account.step1": {en:"Step 1", es:"Paso 1", zh:"第一步", hi:"चरण 1", ko:"1단계", vi:"Bước 1"},
+    "account.eduEmail": {en:"Your .edu email", es:"Tu correo .edu", zh:"你的 .edu 邮箱", hi:"आपका .edu ईमेल", ko:".edu 이메일", vi:"Email .edu của bạn"},
+    "account.ageConfirm": {en:"I confirm I am 18 years of age or older", es:"Confirmo que tengo 18 años o más", zh:"我确认我已年满18周岁", hi:"मैं पुष्टि करता/करती हूं कि मेरी आयु 18 वर्ष या उससे अधिक है", ko:"저는 18세 이상임을 확인합니다", vi:"Tôi xác nhận mình từ 18 tuổi trở lên"},
+    "account.sendCodeBtn": {en:"Send verification code", es:"Enviar código de verificación", zh:"发送验证码", hi:"सत्यापन कोड भेजें", ko:"인증 코드 전송", vi:"Gửi mã xác minh"},
+    "account.sendLinkBtn": {en:"Send sign-in link", es:"Enviar enlace de acceso", zh:"发送登录链接", hi:"साइन-इन लिंक भेजें", ko:"로그인 링크 보내기", vi:"Gửi liên kết đăng nhập"},
+    "account.sixDigit": {en:"6-digit code", es:"Código de 6 dígitos", zh:"6位验证码", hi:"6-अंकों का कोड", ko:"6자리 코드", vi:"Mã 6 chữ số"},
+    "account.verifyLogin": {en:"Verify & log in", es:"Verificar e iniciar sesión", zh:"验证并登录", hi:"सत्यापित करें व लॉग इन करें", ko:"인증하고 로그인", vi:"Xác minh & đăng nhập"},
+    "account.rememberMe": {en:"Keep me logged in on this device", es:"Mantenerme conectado en este dispositivo", zh:"在此设备上保持登录", hi:"इस डिवाइस पर मुझे लॉग इन रखें", ko:"이 기기에서 로그인 상태 유지", vi:"Giữ tôi đăng nhập trên thiết bị này"},
+    "account.loggedIn": {en:"Logged in", es:"Sesión iniciada", zh:"已登录", hi:"लॉग इन हो गया", ko:"로그인됨", vi:"Đã đăng nhập"},
+    "account.verifiedAs": {en:"Verified as", es:"Verificado como", zh:"已验证身份:", hi:"इस रूप में सत्यापित", ko:"인증된 계정:", vi:"Đã xác minh với"},
+    "account.myPosts": {en:"My posts", es:"Mis publicaciones", zh:"我的发布", hi:"मेरी पोस्ट्स", ko:"내 게시물", vi:"Bài đăng của tôi"},
+    "account.loginToSee": {en:"Log in to see and manage what you've posted.", es:"Inicia sesión para ver y gestionar lo que has publicado.", zh:"登录后即可查看和管理你发布的内容。", hi:"आपने जो पोस्ट किया है उसे देखने और प्रबंधित करने के लिए लॉग इन करें।", ko:"로그인하면 게시한 내용을 보고 관리할 수 있습니다.", vi:"Đăng nhập để xem và quản lý những gì bạn đã đăng."},
+    "account.watchedCourses": {en:"Watched course codes", es:"Códigos de curso seguidos", zh:"已关注的课程代码", hi:"फॉलो किए गए कोर्स कोड", ko:"관심 등록한 과목 코드", vi:"Mã môn học đang theo dõi"},
+    "account.watchNote": {en:"Highlights matching listings when you're viewing that college's board — this doesn't email or push-notify you yet, since real alerts need a backend job, not just a browser tab.", es:"Resalta los anuncios coincidentes cuando ves el tablero de esa universidad — esto aún no te envía un correo ni una notificación push, ya que las alertas reales requieren un proceso de servidor, no solo una pestaña del navegador.", zh:"当你查看该学校的版块时,会高亮显示匹配的信息 — 目前还不会通过邮件或推送通知你,因为真正的提醒需要后台任务支持,而不仅仅是浏览器标签页。", hi:"जब आप उस कॉलेज का बोर्ड देखते हैं तो मेल खाने वाली लिस्टिंग हाइलाइट हो जाती हैं — यह अभी आपको ईमेल या पुश-नोटिफ़ाई नहीं करता, क्योंकि असली अलर्ट के लिए बैकएंड जॉब चाहिए, सिर्फ़ ब्राउज़र टैब नहीं।", ko:"해당 학교 게시판을 볼 때 일치하는 게시물이 강조 표시됩니다 — 실제 알림에는 브라우저 탭이 아닌 백엔드 작업이 필요하기 때문에, 아직 이메일이나 푸시 알림은 보내지 않습니다.", vi:"Làm nổi bật các tin đăng phù hợp khi bạn xem bảng tin của trường đó — tính năng này chưa gửi email hay thông báo đẩy, vì cảnh báo thật sự cần một tác vụ ở máy chủ, không chỉ một tab trình duyệt."},
+    "account.watchEmpty": {en:"Watch a course code from any college's marketplace board to see it here.", es:"Sigue un código de curso desde el tablero de cualquier universidad para verlo aquí.", zh:"在任意学校的交易市场版块关注一个课程代码,即可在此处查看。", hi:"किसी भी कॉलेज के मार्केटप्लेस बोर्ड से एक कोर्स कोड फॉलो करें, यह यहां दिखेगा।", ko:"어느 학교든 마켓플레이스 게시판에서 과목 코드를 관심 등록하면 여기에 표시됩니다.", vi:"Theo dõi một mã môn học từ bảng chợ trao đổi của bất kỳ trường nào để xem tại đây."},
+    "account.myReports": {en:"Reports I've filed", es:"Reportes que he enviado", zh:"我提交的举报", hi:"मेरी दायर रिपोर्ट्स", ko:"내가 신고한 항목", vi:"Báo cáo tôi đã gửi"},
+    "account.myReportsNote": {en:"Shows here in-app once an admin reviews it — no email yet either, for the same reason as above.", es:"Aparece aquí en la app una vez que un administrador lo revisa — tampoco hay correo todavía, por la misma razón de arriba.", zh:"管理员审核后会在应用内显示 — 出于同样原因,目前也没有邮件通知。", hi:"एडमिन द्वारा समीक्षा होने पर यह ऐप में यहां दिखेगा — ऊपर जैसे ही कारण से अभी कोई ईमेल भी नहीं है।", ko:"관리자가 검토하면 앱 내에서 여기에 표시됩니다 — 위와 같은 이유로 아직 이메일은 없습니다.", vi:"Hiển thị ngay tại đây khi quản trị viên xem xét — cũng chưa có email, vì lý do tương tự như trên."},
+
+    "premium.title": {en:"Early access & extra perks", es:"Acceso anticipado y beneficios extra", zh:"抢先体验与额外权益", hi:"शुरुआती पहुंच व अतिरिक्त लाभ", ko:"얼리 액세스 및 추가 혜택", vi:"Truy cập sớm & ưu đãi thêm"},
+    "premium.intro": {en:"This is a concept preview, not a live billing system — no payment is collected anywhere on this page.", es:"Esto es una vista previa conceptual, no un sistema de facturación activo — no se cobra ningún pago en esta página.", zh:"这只是一个概念预览,并非正式的付费系统 — 本页面不会收取任何费用。", hi:"यह एक कॉन्सेप्ट प्रीव्यू है, कोई लाइव बिलिंग सिस्टम नहीं — इस पेज पर कहीं भी भुगतान नहीं लिया जाता।", ko:"이것은 개념 미리보기일 뿐, 실제 결제 시스템이 아닙니다 — 이 페이지 어디에서도 결제가 이루어지지 않습니다.", vi:"Đây chỉ là bản xem trước ý tưởng, không phải hệ thống thanh toán thực tế — không có khoản phí nào được thu trên trang này."},
+    "premium.referralBanner": {en:"You were invited by a fellow student — join the list below and you'll both get priority once Syllabank+ is real.", es:"Fuiste invitado por otro estudiante — únete a la lista de abajo y ambos tendrán prioridad cuando Syllabank+ sea real.", zh:"你是被一位同学邀请来的 — 加入下方名单,一旦 Syllabank+ 正式上线,你们俩都将获得优先权。", hi:"आपको एक साथी छात्र ने आमंत्रित किया है — नीचे दी गई सूची में शामिल हों और जब Syllabank+ वास्तविक होगा तो आप दोनों को प्राथमिकता मिलेगी।", ko:"동료 학생의 초대를 받으셨네요 — 아래 명단에 참여하면 Syllabank+가 실제로 출시될 때 두 분 모두 우선권을 받습니다.", vi:"Bạn được một sinh viên khác mời — hãy tham gia danh sách bên dưới, cả hai bạn sẽ được ưu tiên khi Syllabank+ trở thành hiện thực."},
+    "premium.plannedTag": {en:"Planned perks", es:"Beneficios planeados", zh:"计划中的权益", hi:"योजनाबद्ध लाभ", ko:"계획된 혜택", vi:"Ưu đãi dự kiến"},
+    "premium.whatInclude": {en:"What Syllabank+ would include", es:"Qué incluiría Syllabank+", zh:"Syllabank+ 将包含哪些内容", hi:"Syllabank+ में क्या शामिल होगा", ko:"Syllabank+에 포함될 내용", vi:"Syllabank+ sẽ bao gồm những gì"},
+    "premium.perk1": {en:"No limit on active marketplace listings", es:"Sin límite de anuncios activos en el mercado", zh:"交易市场信息发布数量不设上限", hi:"सक्रिय मार्केटप्लेस लिस्टिंग की कोई सीमा नहीं", ko:"활성 마켓플레이스 게시물 수 제한 없음", vi:"Không giới hạn số tin đăng đang hoạt động"},
+    "premium.perk2": {en:"Early access to new campus integrations first", es:"Acceso anticipado a nuevas integraciones de campus", zh:"优先体验新的校园集成功能", hi:"नए कैंपस इंटीग्रेशन तक सबसे पहले पहुंच", ko:"새로운 캠퍼스 연동 기능 우선 이용", vi:"Truy cập sớm nhất các tích hợp mới của trường"},
+    "premium.perk3": {en:"Priority on requested study-help topics", es:"Prioridad en los temas de ayuda de estudio solicitados", zh:"求助的学习主题将被优先处理", hi:"अनुरोधित स्टडी-हेल्प विषयों पर प्राथमिकता", ko:"요청한 학습 도움 주제 우선 처리", vi:"Ưu tiên với các chủ đề hỗ trợ học tập được yêu cầu"},
+    "premium.perk4": {en:"An ad-free layout (there are no ads today either)", es:"Un diseño sin anuncios (tampoco hay anuncios hoy)", zh:"无广告布局(目前本就没有广告)", hi:"बिना विज्ञापन वाला लेआउट (आज भी कोई विज्ञापन नहीं है)", ko:"광고 없는 화면 (현재도 광고는 없습니다)", vi:"Giao diện không quảng cáo (hiện tại cũng không có quảng cáo)"},
+    "premium.notBuiltYet": {en:"None of this is built yet — it's a placeholder for what a paid tier could offer later.", es:"Nada de esto está construido todavía — es un marcador de lo que un nivel de pago podría ofrecer más adelante.", zh:"以上内容目前均尚未开发 — 只是未来付费版本可能提供内容的占位说明。", hi:"इनमें से कुछ भी अभी बना नहीं है — यह भविष्य में पेड टियर द्वारा दी जा सकने वाली सुविधाओं का एक प्लेसहोल्डर है।", ko:"아직 아무것도 구현되지 않았습니다 — 향후 유료 등급이 제공할 수 있는 내용을 위한 자리표시일 뿐입니다.", vi:"Chưa có tính năng nào ở đây được xây dựng — đây chỉ là gợi ý cho những gì một gói trả phí có thể cung cấp sau này."},
+    "premium.joinList": {en:"Join the early-access list", es:"Únete a la lista de acceso anticipado", zh:"加入抢先体验名单", hi:"शुरुआती पहुंच सूची में शामिल हों", ko:"얼리 액세스 명단 참여", vi:"Tham gia danh sách truy cập sớm"},
+    "premium.noPayment": {en:"No payment required", es:"No se requiere pago", zh:"无需付款", hi:"किसी भुगतान की आवश्यकता नहीं", ko:"결제 필요 없음", vi:"Không cần thanh toán"},
+    "premium.email": {en:"Email", es:"Correo electrónico", zh:"邮箱", hi:"ईमेल", ko:"이메일", vi:"Email"},
+    "premium.joinBtn": {en:"Join early access", es:"Unirse al acceso anticipado", zh:"加入抢先体验", hi:"शुरुआती पहुंच में शामिल हों", ko:"얼리 액세스 참여", vi:"Tham gia truy cập sớm"},
+    "premium.inviteLabel": {en:"Your invite link — share it, and whoever joins with it gets priority too", es:"Tu enlace de invitación — compártelo, y quien se una con él también tendrá prioridad", zh:"你的邀请链接 — 分享出去,凡是通过此链接加入的人也会获得优先权", hi:"आपका आमंत्रण लिंक — इसे शेयर करें, और जो भी इससे जुड़ेगा उसे भी प्राथमिकता मिलेगी", ko:"내 초대 링크 — 공유하면, 이 링크로 참여한 사람도 우선권을 받습니다", vi:"Liên kết mời của bạn — chia sẻ nó, ai tham gia qua liên kết này cũng sẽ được ưu tiên"},
+    "premium.copyBtn": {en:"Copy", es:"Copiar", zh:"复制", hi:"कॉपी करें", ko:"복사", vi:"Sao chép"}
+  };
+
+  var currentLang = 'en';
+
+  function t(key){
+    var entry = TRANSLATIONS[key];
+    if(!entry) return null;
+    return entry[currentLang] || entry.en;
+  }
+
+  function applyLanguage(lang){
+    currentLang = TRANSLATIONS['nav.resources'][lang] ? lang : 'en';
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll('[data-i18n]').forEach(function(el){
+      var val = t(el.getAttribute('data-i18n'));
+      if(val != null) el.innerHTML = val;
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
+      var val = t(el.getAttribute('data-i18n-ph'));
+      if(val != null) el.placeholder = val;
+    });
+    var switcher = document.getElementById('lang-switcher');
+    if(switcher) switcher.value = currentLang;
+    var isEnglish = currentLang === 'en';
+    var scholarNote = document.getElementById('scholar-lang-note');
+    var legalNote = document.getElementById('legal-lang-note');
+    if(scholarNote) scholarNote.hidden = isEnglish;
+    if(legalNote) legalNote.hidden = isEnglish;
+    // The account-intro line depends on which backend is active, not just
+    // language — Supabase/preview send a typed code, Firebase sends a
+    // clickable link. Picking this here (re-run on every language change
+    // too) means it never needs a manual edit if you switch backends later.
+    var introEl = document.getElementById('account-intro-text');
+    if(introEl){
+      introEl.innerHTML = usingFirebase ? t('account.introLink') : t('account.introCode');
+    }
+    var sendBtnEl = document.getElementById('send-code-btn');
+    if(sendBtnEl){
+      sendBtnEl.innerHTML = usingFirebase ? t('account.sendLinkBtn') : t('account.sendCodeBtn');
+    }
+    var privacyLoginEl = document.getElementById('privacy-login-method');
+    if(privacyLoginEl){
+      privacyLoginEl.innerHTML = usingFirebase ? t('privacy.loginMethodLink') : t('privacy.loginMethodCode');
+    }
+    // Firebase has no code to enter at all — rather than just hiding this
+    // box with CSS, remove it from the page outright so there's no way
+    // for it to ever be visible, under any condition, on this backend.
+    if(usingFirebase){
+      var codeFormEl = document.getElementById('verify-code-form');
+      if(codeFormEl) codeFormEl.remove();
+    }
+  }
+
+
+  // ============ BACKEND CONFIG ============
+  // Fill these in with your own free Supabase project to make this live and
+  // shared across every real visitor, not just your own browser tab.
+  // See the setup guide provided alongside this file for the SQL to run first.
+  var SUPABASE_URL = 'https://yboclyvstedyznkkcvrx.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable__fOVibsHCfaxepG3q6ekYg_lwimZhYM';
+  // In preview/testing mode (no real Supabase yet), logging in as this email
+  // unlocks the admin view so you can see and test it right now.
+  var PREVIEW_ADMIN_EMAIL = 'admin@example.edu';
+
+  var supabaseConfigured = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL') === -1 &&
+                            SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY') === -1 &&
+                            SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+
+  // Feature-detect real browser storage rather than assuming it works: this lets
+  // logins actually persist across page reloads once hosted for real, while still
+  // failing safely (falls back to session-only) inside sandboxed/restricted
+  // preview environments where storage access is blocked.
+  function storageKindWorks(kind){
+    try{
+      var k = '__syllabank_storage_test__';
+      window[kind].setItem(k, '1');
+      window[kind].removeItem(k);
+      return true;
+    }catch(e){ return false; }
+  }
+  var localWorks = storageKindWorks('localStorage');
+  var sessionWorks = storageKindWorks('sessionStorage');
+  var canPersistSession = localWorks || sessionWorks;
+
+  // ---------- Small, honest use of localStorage for return-visit convenience:
+  // remembers your last-linked college and language choice so you don't have
+  // to redo them every visit. Falls back to doing nothing (not crashing) if
+  // storage is blocked. This is separate from login/session storage above. ----------
+  var PREF_COLLEGE_KEY = '__syllabank_last_college__';
+  var PREF_LANG_KEY = '__syllabank_lang__';
+  function rememberPref(key, value){
+    try{ if(localWorks) window.localStorage.setItem(key, value); }catch(e){}
+  }
+  function recallPref(key){
+    try{ return localWorks ? window.localStorage.getItem(key) : null; }catch(e){ return null; }
+  }
+
+  // ---------- Session length: "Remember me" ----------
+  // Unchecked (default): the login lives in sessionStorage — gone the moment the
+  // browser tab closes. Checked: it lives in localStorage — survives closing the
+  // browser entirely, until Supabase's own server-side token/refresh expiry (set
+  // in your Supabase project's Auth settings, not by this file) eventually ends it.
+  // This custom storage adapter is what lets a single Supabase client honor a
+  // per-login choice instead of one fixed behavior for everyone.
+  var REMEMBER_KEY = '__syllabank_remember__';
+  function isRemembering(){
+    try{ return localWorks && window.localStorage.getItem(REMEMBER_KEY) === '1'; }catch(e){ return false; }
+  }
+  function setRemember(on){
+    try{
+      if(on && localWorks) window.localStorage.setItem(REMEMBER_KEY, '1');
+      else if(localWorks) window.localStorage.removeItem(REMEMBER_KEY);
+    }catch(e){}
+  }
+  var sessionAdapter = {
+    getItem: function(key){
+      try{ return (isRemembering() ? window.localStorage : window.sessionStorage).getItem(key); }
+      catch(e){ return null; }
+    },
+    setItem: function(key, value){
+      try{ (isRemembering() ? window.localStorage : window.sessionStorage).setItem(key, value); }
+      catch(e){}
+    },
+    removeItem: function(key){
+      try{ if(localWorks) window.localStorage.removeItem(key); }catch(e){}
+      try{ if(sessionWorks) window.sessionStorage.removeItem(key); }catch(e){}
+    }
+  };
+
+  var sb = null;
+  if(supabaseConfigured && window.supabase && typeof window.supabase.createClient === 'function'){
+    try{
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: canPersistSession, storage: sessionAdapter }
+      });
+    }catch(e){ sb = null; }
+  }
+
+  // ---------- Optional Firebase backend — only used if Supabase isn't
+  // configured and FIREBASE_CONFIG below has been filled in. Firebase
+  // Auth has no free 6-digit-code email login (that needs paid Cloud
+  // Functions) — the free equivalent is email LINK sign-in: you get a
+  // real link, click it, and land back here signed in automatically. ----------
+  var FIREBASE_CONFIG = {
+    apiKey: 'AIzaSyDywGg2NtjFP2TTuCRXZ5KvVmGVCrthGRk',
+    authDomain: 'syllabank-b6f76.firebaseapp.com',
+    projectId: 'syllabank-b6f76'
+  };
+  var firebaseConfigured = FIREBASE_CONFIG.apiKey.indexOf('YOUR_FIREBASE_API_KEY') === -1 && FIREBASE_CONFIG.apiKey.length > 0;
+  var fbAuth = null, fbDb = null;
+  if(!sb && firebaseConfigured && window.firebase && typeof window.firebase.initializeApp === 'function'){
+    try{
+      window.firebase.initializeApp(FIREBASE_CONFIG);
+      fbAuth = window.firebase.auth();
+      fbDb = window.firebase.firestore();
+      fbAuth.setPersistence(canPersistSession && isRemembering() ?
+        window.firebase.auth.Auth.Persistence.LOCAL : window.firebase.auth.Auth.Persistence.SESSION
+      ).catch(function(){});
+    }catch(e){ fbAuth = null; fbDb = null; }
+  }
+  var usingFirebase = !!(fbAuth && fbDb);
+  var usingRealBackend = !!sb || usingFirebase;
+  var PREF_FIREBASE_EMAIL_KEY = '__syllabank_firebase_email__';
+
+  async function ensureFirebaseProfile(user){
+    var profRef = fbDb.collection('profiles').doc(user.uid);
+    var snap = await profRef.get();
+    if(!snap.exists){
+      await profRef.set({ email: user.email, is_admin: false, confirmed_trades_count: 0, created_at: new Date().toISOString() });
+      return { is_admin: false, confirmed_trades_count: 0 };
+    }
+    return snap.data();
+  }
+
+  async function restoreSession(){
+    if(sb){
+      try{
+        var res = await sb.auth.getSession();
+        var session = res && res.data && res.data.session;
+        if(session && session.user){
+          var isAdmin = false;
+          try{
+            var prof = await sb.from('profiles').select('is_admin').eq('id', session.user.id).single();
+            isAdmin = !!(prof.data && prof.data.is_admin);
+          }catch(e){ /* profile check failed, default not-admin */ }
+          currentUser = { id: session.user.id, email: session.user.email, isAdmin: isAdmin };
+          updateAuthUI();
+        }
+      }catch(e){ /* no existing session, or restore failed — stay logged out */ }
+      return;
+    }
+    if(usingFirebase){
+      // If we just arrived via a clicked email-sign-in-link, complete it.
+      if(fbAuth.isSignInWithEmailLink(window.location.href)){
+        var pendingEmailForLink = recallPref(PREF_FIREBASE_EMAIL_KEY) || window.prompt('Confirm the email you signed in with:');
+        if(pendingEmailForLink){
+          try{
+            await fbAuth.signInWithEmailLink(pendingEmailForLink, window.location.href);
+            window.history.replaceState(null, '', window.location.pathname);
+          }catch(e){ logBug('firebase-link-error', e.message); }
+        }
+      }
+      // onAuthStateChanged is Firebase's own restore mechanism — fires once
+      // immediately with whatever session already exists (or null), then
+      // again on every future sign-in/sign-out.
+      fbAuth.onAuthStateChanged(async function(user){
+        if(user){
+          var profData = await ensureFirebaseProfile(user);
+          currentUser = { id: user.uid, email: user.email, isAdmin: !!(profData && profData.is_admin) };
+        } else {
+          currentUser = null;
+        }
+        updateAuthUI();
+      });
+    }
+  }
+
+  // ---------- Sample data (suggestions only, free text always works) ----------
+  var COLLEGES = [
+    "Arizona State University","Auburn University","Baylor University","Boston University",
+    "Brown University","Clemson University","Cornell University","Duke University",
+    "Emory University","Florida State University","George Washington University",
+    "Georgia Institute of Technology","Georgia State University","Howard University",
+    "Indiana University Bloomington","Iowa State University","Louisiana State University",
+    "Michigan State University","New York University","North Carolina State University",
+    "Northeastern University","Ohio State University","Oregon State University",
+    "Penn State University","Purdue University","Rutgers University","San Diego State University",
+    "Spelman College","SUNY Buffalo","Syracuse University","Texas A&M University",
+    "Texas Tech University","Tulane University","University at Albany","University of Alabama",
+    "University of Arizona","University of California, Berkeley","University of California, Los Angeles",
+    "University of California, San Diego","University of Central Florida","University of Cincinnati",
+    "University of Colorado Boulder","University of Connecticut","University of Delaware",
+    "University of Florida","University of Georgia","University of Houston","University of Illinois Urbana-Champaign",
+    "University of Iowa","University of Kansas","University of Kentucky","University of Maryland",
+    "University of Massachusetts Amherst","University of Miami","University of Michigan",
+    "University of Minnesota","University of Mississippi","University of Missouri",
+    "University of Nebraska-Lincoln","University of Nevada, Las Vegas","University of North Carolina at Chapel Hill",
+    "University of Notre Dame","University of Oklahoma","University of Oregon","University of Pittsburgh",
+    "University of South Carolina","University of South Florida","University of Southern California",
+    "University of Tennessee","University of Texas at Austin","University of Utah","University of Virginia",
+    "University of Washington","University of Wisconsin–Madison","Vanderbilt University",
+    "Virginia Tech","Wake Forest University","Washington State University","West Virginia University"
+  ];
+  var TOPICS = [
+    "Algebra","Anatomy & Physiology","Biology","Calculus I","Calculus II","Chemistry",
+    "College Writing / Composition","Economics (Micro)","Economics (Macro)","Essay Writing",
+    "General Chemistry","Linear Algebra","MLA Citations","Organic Chemistry","Physics I","Physics II",
+    "Psychology (Intro)","Public Speaking","Spanish Grammar","Statistics","Study Skills",
+    "APA Citations","World History","U.S. History","Sociology (Intro)","Accounting (Intro)",
+    "Computer Science (Intro)","Data Structures","Discrete Math","Microeconomics","Macroeconomics"
+  ];
+
+  function fillDatalist(id, items){
+    var dl = document.getElementById(id);
+    var frag = document.createDocumentFragment();
+    items.forEach(function(name){ var opt = document.createElement('option'); opt.value = name; frag.appendChild(opt); });
+    dl.appendChild(frag);
+  }
+  fillDatalist('college-options', COLLEGES);
+  fillDatalist('topic-options', TOPICS);
+
+  function slug(name){ return String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+  function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+  // Converts a Firestore query snapshot into the same shape Supabase already
+  // returns (a plain array of {id, ...fields}), so the rest of the app's
+  // rendering code doesn't need to know or care which backend answered it.
+  function fsSnapToArray(snap){
+    var arr = [];
+    snap.forEach(function(doc){ arr.push(Object.assign({ id: doc.id }, doc.data())); });
+    return arr;
+  }
+  // Mirrors the admin_allowlist array in the SQL/Firestore rules — kept in
+  // sync manually since there's no shared source between client and backend.
+  // If you add an admin email on one side, add it here too.
+  var ADMIN_EMAIL_ALLOWLIST = ['londonkefyalew@gmail.com'];
+  function isEduEmail(email){
+    var e = String(email).trim().toLowerCase();
+    if(ADMIN_EMAIL_ALLOWLIST.indexOf(e) !== -1) return true;
+    return /^[^\s@]+@[^\s@]+\.edu$/i.test(e);
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,9); }
+
+  // ============ Error handling: contains bugs, logs them, does NOT rewrite code ============
+  var toastTimer = null;
+  function showGlitchToast(message){
+    var toast = document.getElementById('glitch-toast');
+    if(!toast){ toast = document.createElement('div'); toast.id = 'glitch-toast'; toast.className = 'glitch-toast'; document.body.appendChild(toast); }
+    toast.textContent = message || 'Something glitched — it was logged automatically so it can get fixed.';
+    toast.classList.add('show');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 5000);
+  }
+  var loggingBug = false;
+  async function logBug(kind, message, stack, extra){
+    if(loggingBug) return;
+    loggingBug = true;
+    try{
+      var payload = { kind: kind, message: String(message||'').slice(0,500), stack: String(stack||'').slice(0,1000), extra: extra||'', version: SITE_VERSION, url: (typeof location!=='undefined'?location.href:''), created_at: new Date().toISOString() };
+      if(sb){ await sb.from('bug_reports').insert(payload); }
+      else if(usingFirebase){ await fbDb.collection('bug_reports').add(payload); }
+      else { memory.bugReports.push(payload); }
+    }catch(e){ /* logging itself failed - nothing more we can safely do */ }
+    finally{ loggingBug = false; }
+  }
+  window.addEventListener('error', function(e){ logBug('runtime-error', e.message, e.error && e.error.stack, e.filename+':'+e.lineno); showGlitchToast(); });
+  window.addEventListener('unhandledrejection', function(e){ var r=e.reason; logBug('unhandled-rejection', (r&&r.message)||String(r), r&&r.stack); showGlitchToast(); });
+
+  // ============ In-memory fallback (used until real Supabase creds are added) ============
+  var memory = { listings: [], videos: [], premiumInterest: [], bugReports: [], reports: [], watches: [], tradeConfirmations: [] };
+
+  // ============ Trade reputation: a buyer confirming they actually got a
+  // book from a seller — real signal because it's the OTHER person vouching,
+  // not a number sellers can inflate themselves. ============
+  async function fetchReputation(userIds){
+    var uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
+    if(uniqueIds.length === 0) return {};
+    var map = {};
+    if(sb){
+      try{
+        var res = await sb.rpc('get_reputation', { user_ids: uniqueIds });
+        (res.data || []).forEach(function(row){ map[row.id] = row.confirmed_trades_count; });
+      }catch(e){ /* reputation is a nice-to-have, never block the page over it */ }
+    } else if(usingFirebase){
+      try{
+        var counts = await Promise.all(uniqueIds.map(function(id){
+          return fbDb.collection('trade_confirmations').where('seller_id','==',id).count().get();
+        }));
+        uniqueIds.forEach(function(id, i){ map[id] = counts[i].data().count; });
+      }catch(e){ /* reputation is a nice-to-have, never block the page over it */ }
+    } else {
+      uniqueIds.forEach(function(id){
+        map[id] = memory.tradeConfirmations.filter(function(c){ return c.seller_id === id; }).length;
+      });
+    }
+    return map;
+  }
+
+  async function confirmTrade(listingId){
+    if(!currentUser) return { ok:false, error:'Log in first.' };
+    if(sb){
+      var res = await sb.from('trade_confirmations').insert({ listing_id: listingId, buyer_id: currentUser.id });
+      if(res.error){
+        var msg = res.error.message || '';
+        if(msg.indexOf('duplicate') !== -1 || msg.indexOf('unique') !== -1) return { ok:false, error:'You already confirmed this trade.' };
+        if(msg.indexOf('own listing') !== -1) return { ok:false, error:'You cannot confirm a trade on your own listing.' };
+        return { ok:false, error:'Something went wrong — try again.' };
+      }
+      return { ok:true };
+    }
+    if(usingFirebase){
+      // A deterministic doc ID (listing+buyer) makes duplicates naturally
+      // collide. The REAL enforcement against gaming lives in the security
+      // rules (seller looked up server-side, self-confirm rejected there
+      // too) — these checks here are just for a friendly message before
+      // that, not the actual security boundary.
+      try{
+        var listingSnap = await fbDb.collection('listings').doc(listingId).get();
+        if(!listingSnap.exists) return { ok:false, error:'Listing not found.' };
+        var realSeller = listingSnap.data().user_id;
+        if(realSeller === currentUser.id) return { ok:false, error:'You cannot confirm a trade on your own listing.' };
+        var confirmId = listingId + '_' + currentUser.id;
+        var existing = await fbDb.collection('trade_confirmations').doc(confirmId).get();
+        if(existing.exists) return { ok:false, error:'You already confirmed this trade.' };
+        await fbDb.collection('trade_confirmations').doc(confirmId).set({
+          listing_id: listingId, seller_id: realSeller, buyer_id: currentUser.id, created_at: new Date().toISOString()
+        });
+        return { ok:true };
+      }catch(e){
+        var msgLower = String((e && e.message) || '').toLowerCase();
+        if(msgLower.indexOf('permission') !== -1) return { ok:false, error:'Could not confirm — you may have already confirmed this trade.' };
+        logBug('firestore-error', e.message);
+        return { ok:false, error:'Something went wrong — try again.' };
+      }
+    }
+    // fallback: mirror the same integrity rules the real DB trigger enforces
+    var listing = memory.listings.find(function(x){ return x.id === listingId; });
+    if(!listing) return { ok:false, error:'Listing not found.' };
+    if(listing.user_id === currentUser.id) return { ok:false, error:'You cannot confirm a trade on your own listing.' };
+    var already = memory.tradeConfirmations.some(function(c){ return c.listing_id === listingId && c.buyer_id === currentUser.id; });
+    if(already) return { ok:false, error:'You already confirmed this trade.' };
+    memory.tradeConfirmations.push({ id: uid(), listing_id: listingId, seller_id: listing.user_id, buyer_id: currentUser.id, created_at: new Date().toISOString() });
+    return { ok:true };
+  }
+
+
+  // ============ Auth ============
+  var currentUser = null; // { id, email, isAdmin }
+  var pendingEmail = '';
+
+  function updateAuthUI(){
+    var loggedIn = !!currentUser;
+    document.getElementById('nav-auth-logged-out').hidden = loggedIn;
+    document.getElementById('nav-auth-logged-in').hidden = !loggedIn;
+    if(loggedIn) document.getElementById('nav-auth-email').textContent = currentUser.email;
+
+    document.getElementById('auth-logged-out').hidden = loggedIn;
+    document.getElementById('auth-logged-in').hidden = !loggedIn;
+    if(loggedIn) document.getElementById('auth-current-email').textContent = currentUser.email;
+
+    document.getElementById('listing-form-locked').hidden = loggedIn;
+    document.getElementById('listing-form').hidden = !loggedIn;
+    document.getElementById('video-form-locked').hidden = loggedIn;
+    document.getElementById('video-form').hidden = !loggedIn;
+
+    document.getElementById('nav-admin-link').hidden = !(loggedIn && currentUser.isAdmin);
+    document.getElementById('admin').hidden = !(loggedIn && currentUser.isAdmin);
+    if(loggedIn && currentUser.isAdmin) loadAdmin();
+
+    if(loggedIn) loadMyPosts(); else document.getElementById('my-posts-container').innerHTML = '<p class="empty-note">Log in to see and manage what you\'ve posted.</p>';
+    loadMyWatches();
+    loadMyReports();
+    updateInviteLinkBox();
+
+    // Re-check the currently-viewed college's board so the watch box and any
+    // watch-match highlights update immediately on login/logout, instead of
+    // requiring a manual Refresh click.
+    if(currentCollege) loadListings(currentCollege);
+
+    renderVisibleListings();
+    renderVisibleVideos();
+  }
+
+  async function sendCode(email){
+    if(sb){
+      var res = await sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
+      return { ok: !res.error, error: res.error && res.error.message };
+    }
+    if(usingFirebase){
+      try{
+        var actionCodeSettings = { url: window.location.href.split('?')[0], handleCodeInApp: true };
+        await fbAuth.sendSignInLinkToEmail(email, actionCodeSettings);
+        rememberPref(PREF_FIREBASE_EMAIL_KEY, email);
+        return { ok: true, firebaseLink: true };
+      }catch(e){ return { ok: false, error: e.message }; }
+    }
+    // preview fallback: no real email sent, code is always 123456
+    return { ok: true, preview: true };
+  }
+
+  async function verifyCode(email, code){
+    if(sb){
+      var res = await sb.auth.verifyOtp({ email: email, token: code, type: 'email' });
+      if(res.error || !res.data || !res.data.user) return { ok: false, error: res.error && res.error.message };
+      var isAdmin = false;
+      try{
+        var prof = await sb.from('profiles').select('is_admin').eq('id', res.data.user.id).single();
+        isAdmin = !!(prof.data && prof.data.is_admin);
+      }catch(e){ /* profile check failed, default not-admin */ }
+      currentUser = { id: res.data.user.id, email: res.data.user.email, isAdmin: isAdmin };
+      return { ok: true };
+    }
+    // Firebase mode never reaches here in normal use — there's no code step,
+    // sign-in completes automatically when the emailed link is clicked
+    // (see restoreSession). This only fires if someone submits the code
+    // form anyway; nothing to verify, so just say so.
+    if(usingFirebase){
+      return { ok: false, error: 'Check your email and click the sign-in link instead — there\'s no code to enter.' };
+    }
+    // preview fallback
+    if(code !== '123456') return { ok: false, error: 'In preview mode the code is always 123456.' };
+    currentUser = { id: 'preview-' + slug(email), email: email, isAdmin: (email.toLowerCase() === PREVIEW_ADMIN_EMAIL) };
+    return { ok: true };
+  }
+
+  function logout(){
+    if(sb) sb.auth.signOut();
+    if(usingFirebase) fbAuth.signOut();
+    currentUser = null;
+    document.getElementById('auth-email').value = '';
+    var codeInput = document.getElementById('auth-code');
+    if(codeInput) codeInput.value = '';
+    document.getElementById('send-code-form').style.display = '';
+    var codeFormForLogout = document.getElementById('verify-code-form');
+    if(codeFormForLogout) codeFormForLogout.classList.remove('show');
+    updateAuthUI();
+  }
+
+  document.getElementById('send-code-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var status = document.getElementById('send-code-status');
+    var btn = document.getElementById('send-code-btn');
+    var email = document.getElementById('auth-email').value.trim();
+    if(!document.getElementById('age-confirm-checkbox').checked){
+      status.className='status-msg err'; status.textContent='Please confirm you are 18 or older to continue.'; return;
+    }
+    if(!isEduEmail(email)){ status.className='status-msg err'; status.textContent='Needs to be a .edu email address.'; return; }
+    btn.disabled = true; status.className='status-msg'; status.textContent='Sending…';
+    var res = await sendCode(email);
+    btn.disabled = false;
+    if(res.ok){
+      pendingEmail = email;
+      status.className='status-msg ok';
+      if(res.firebaseLink){
+        status.textContent = 'Sign-in link sent — open your email on this device and click it. You\'ll land back here signed in automatically.';
+      } else {
+        status.textContent = res.preview ? 'Preview mode — no real email sent. Use code 123456 below.' : 'Code sent — check your inbox.';
+        document.getElementById('verify-code-form').classList.add('show');
+      }
+    } else {
+      status.className='status-msg err'; status.textContent = res.error || 'Could not send code — try again.';
+    }
+  });
+
+  document.getElementById('verify-code-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var status = document.getElementById('verify-code-status');
+    var btn = document.getElementById('verify-code-btn');
+    var code = document.getElementById('auth-code').value.trim();
+    if(!code){ status.className='status-msg err'; status.textContent='Enter the code.'; return; }
+    // Set the remember-me choice BEFORE verifying, so the storage adapter
+    // already knows where to persist the session the moment it's issued.
+    setRemember(document.getElementById('remember-me-checkbox').checked);
+    btn.disabled = true; status.className='status-msg'; status.textContent='Verifying…';
+    var res = await verifyCode(pendingEmail, code);
+    btn.disabled = false;
+    if(res.ok){
+      status.className='status-msg ok'; status.textContent='Verified.';
+      updateAuthUI();
+    } else {
+      status.className='status-msg err'; status.textContent = res.error || 'Invalid code — try again.';
+      setRemember(false); // failed login — don't leave a stale remember-me flag set
+    }
+  });
+
+  document.getElementById('nav-logout-btn').addEventListener('click', logout);
+  document.getElementById('account-logout-btn').addEventListener('click', logout);
+
+  // ============ Connection status bar ============
+  function setStatusBar(){
+    var dot = document.getElementById('status-dot');
+    var text = document.getElementById('status-text');
+    if(sb){
+      dot.classList.add('live');
+      text.textContent = 'Live — connected to your Supabase project.';
+    } else if(usingFirebase){
+      dot.classList.add('live');
+      text.textContent = 'Live — connected to your Firebase project.';
+    } else {
+      dot.classList.remove('live');
+      text.textContent = 'Preview mode — no live database connected yet. Everything below is fully testable locally (log in as ' + PREVIEW_ADMIN_EMAIL + ' to see the admin view).';
+    }
+    var persistNote = document.getElementById('no-persist-note');
+    if(persistNote) persistNote.hidden = !!((sb || usingFirebase) && canPersistSession);
+  }
+  document.getElementById('test-connection-btn').addEventListener('click', async function(){
+    var result = document.getElementById('connection-test-result');
+    if(!sb && !usingFirebase){ result.className='status-msg err'; result.textContent='Not configured — add your Supabase or Firebase credentials in the script to test a live connection.'; return; }
+    result.className='status-msg'; result.textContent='Testing…';
+    if(sb){
+      try{
+        var res = await sb.from('listings').select('id').limit(1);
+        if(res.error){ result.className='status-msg err'; result.textContent='Reachable but returned an error: ' + res.error.message + ' (check your SQL setup ran).'; }
+        else { result.className='status-msg ok'; result.textContent='Connected — your database is reachable and responding correctly.'; }
+      }catch(e){ result.className='status-msg err'; result.textContent='Could not reach Supabase — check the URL/key.'; }
+      return;
+    }
+    try{
+      await fbDb.collection('listings').where('hidden','==',false).limit(1).get();
+      result.className='status-msg ok'; result.textContent='Connected — Firestore is reachable and responding correctly.';
+    }catch(e){ result.className='status-msg err'; result.textContent='Reachable but returned an error: ' + e.message + ' (check your Firestore rules and config).'; }
+  });
+
+  // ============ Listings ============
+  var heroInput = document.getElementById('hero-college-input');
+  var listingCollegeInput = document.getElementById('listing-college-input');
+  var viewingCollege = document.getElementById('viewing-college');
+  var listingsContainer = document.getElementById('listings-container');
+  var currentCollege = '';
+  var lastListingItems = [];
+
+  async function fetchListings(collegeSlug){
+    if(sb){
+      var res = await sb.from('listings').select('*').eq('college', collegeSlug).eq('hidden', false).order('created_at', { ascending: false });
+      return res.data || [];
+    }
+    if(usingFirebase){
+      try{
+        var snap = await fbDb.collection('listings').where('college','==',collegeSlug).where('hidden','==',false).orderBy('created_at','desc').get();
+        return fsSnapToArray(snap);
+      }catch(e){ logBug('firestore-error', e.message); return []; }
+    }
+    return memory.listings.filter(function(x){ return x.college === collegeSlug && !x.hidden; }).sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); });
+  }
+
+  function renderVisibleListings(){
+    if(!lastListingItems.length && currentCollege){ /* nothing to re-render */ }
+    listingsContainer.querySelectorAll('.item-card').forEach(function(el){
+      var ownerId = el.getAttribute('data-user-id');
+      var reportBtn = el.querySelector('.report-btn');
+      var removeBtn = el.querySelector('.remove-btn');
+      var editBtn = el.querySelector('.edit-btn');
+      var confirmBtn = el.querySelector('.confirm-trade-btn');
+      if(reportBtn) reportBtn.hidden = !currentUser || currentUser.id === ownerId;
+      if(removeBtn) removeBtn.hidden = !currentUser || (currentUser.id !== ownerId && !currentUser.isAdmin);
+      if(editBtn) editBtn.hidden = !currentUser || currentUser.id !== ownerId;
+      if(confirmBtn) confirmBtn.hidden = !currentUser || currentUser.id === ownerId;
+    });
+  }
+
+  async function loadListings(name){
+    currentCollege = name || '';
+    var watchBox = document.getElementById('watch-course-box');
+    if(!currentCollege){
+      viewingCollege.textContent = 'no school linked yet';
+      listingsContainer.innerHTML = '<p class="empty-note">Link your college above to load its listings.</p>';
+      watchBox.hidden = true;
+      return;
+    }
+    viewingCollege.textContent = currentCollege;
+    listingsContainer.innerHTML = '<p class="empty-note">Loading…</p>';
+    watchBox.hidden = !currentUser;
+    var items = await fetchListings(slug(currentCollege));
+    lastListingItems = items;
+    var watchedCourses = currentUser ? await fetchWatchedCourses(slug(currentCollege)) : [];
+    var reputationMap = await fetchReputation(items.map(function(i){ return i.user_id; }));
+    if(items.length === 0){
+      listingsContainer.innerHTML = '<p class="empty-note">Real students haven\'t posted here yet — be the first. (You\'ll need to verify your .edu email to post.)</p>';
+      renderExampleListings();
+      return;
+    }
+    listingsContainer.innerHTML = '';
+    items.forEach(function(item){ listingsContainer.appendChild(buildListingCard(item, watchedCourses, reputationMap)); });
+    renderVisibleListings();
+  }
+
+  // Clearly-labeled sample cards shown ONLY when a board is genuinely empty —
+  // never mixed in with real listings, never wired to any database action
+  // (no report/edit/remove), and never rendered as if they were real posts.
+  // This exists purely so a brand-new board doesn't look completely bare
+  // while real listings are still being gathered.
+  var EXAMPLE_LISTINGS = [
+    { title: 'Intro Psychology, 7th ed.', course: 'PSYC 101', price: 35 },
+    { title: 'Calculus: Early Transcendentals', course: 'MATH 151', price: 50 }
+  ];
+  function renderExampleListings(){
+    var wrap = document.createElement('div');
+    wrap.style.marginTop = '16px';
+    wrap.innerHTML = '<p style="font-size:12px;color:rgba(27,35,24,0.55);margin-bottom:10px;">What a real listing looks like — post yours below to replace these:</p>';
+    EXAMPLE_LISTINGS.forEach(function(ex){
+      var card = document.createElement('div');
+      card.className = 'item-card';
+      card.style.borderStyle = 'dashed';
+      card.style.opacity = '0.8';
+      card.innerHTML =
+        '<span class="badge" style="margin-bottom:8px;">EXAMPLE — not a real listing</span>' +
+        '<div class="top-row"><div><div class="course">'+escapeHtml(ex.course)+'</div><h4>'+escapeHtml(ex.title)+'</h4></div>' +
+        '<div class="price">$'+ex.price+'</div></div>';
+      wrap.appendChild(card);
+    });
+    listingsContainer.appendChild(wrap);
+  }
+
+  function buildListingCard(item, watchedCourses, reputationMap){
+    var row = document.createElement('div');
+    var isWatchMatch = !!(item.course && watchedCourses && watchedCourses.indexOf(String(item.course).trim().toLowerCase()) !== -1);
+    row.className = 'item-card' + (isWatchMatch ? ' watch-match' : '');
+    row.setAttribute('data-id', item.id);
+    row.setAttribute('data-user-id', item.user_id);
+    var priceNum = Number(item.price);
+    var repCount = (reputationMap && reputationMap[item.user_id]) || 0;
+    row.innerHTML =
+      (isWatchMatch ? '<span class="watch-match-badge">📌 matches your watch</span>' : '') +
+      '<div class="top-row"><div>' +
+        (item.course ? '<div class="course">'+escapeHtml(item.course)+'</div>' : '') +
+        '<h4>'+escapeHtml(item.title)+'</h4>' +
+        '<div class="meta">Contact: '+escapeHtml(item.contact)+' · <span class="verified-tag" title="Posted by a verified .edu account — this confirms campus affiliation, not that the listing itself is accurate">verified .edu account</span>' +
+          (repCount > 0 ? ' · <span class="verified-tag" title="Other students confirmed they actually received a book from this seller">'+repCount+' '+(t('market.confirmedTrades') || (repCount===1 ? 'confirmed trade' : 'confirmed trades'))+'</span>' : '') +
+        '</div>' +
+        (item.isbn ? '<div class="meta">ISBN '+escapeHtml(item.isbn)+' · <a class="link-out" href="https://bookscouter.com/" target="_blank" rel="noopener">check fair price →</a></div>' : '') +
+      '</div><div class="price">$'+(isNaN(priceNum)?'—':priceNum.toFixed(0))+'</div></div>' +
+      '<div class="item-actions">' +
+        '<button class="btn small ghost report-btn" type="button" hidden>Report</button>' +
+        '<button class="btn small ghost edit-btn" type="button" hidden>Edit</button>' +
+        '<button class="btn small ghost confirm-trade-btn" type="button" hidden>' + (t('market.confirmBought') || 'I bought this') + '</button>' +
+        '<button class="btn small danger remove-btn" type="button" hidden>Remove</button>' +
+      '</div>' +
+      '<div class="status-msg confirm-trade-status"></div>' +
+      '<div class="report-box"><textarea placeholder="Why are you reporting this?"></textarea><button class="btn small" type="button" style="margin-top:8px;">Submit report</button></div>' +
+      '<div class="edit-box">' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px;"><input class="edit-title" type="text" placeholder="Book title" value="'+escapeHtml(item.title)+'" style="flex:2;"><input class="edit-course" type="text" placeholder="Course code" value="'+escapeHtml(item.course||'')+'" style="flex:1;"></div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px;"><input class="edit-price" type="number" min="0" placeholder="Price" value="'+priceNum+'" style="flex:1;"><input class="edit-contact" type="text" placeholder="Contact" value="'+escapeHtml(item.contact)+'" style="flex:1;"></div>' +
+        '<div style="display:flex;gap:8px;"><button class="btn small edit-save-btn" type="button">Save changes</button><button class="btn small ghost edit-cancel-btn" type="button">Cancel</button></div>' +
+        '<div class="status-msg edit-status"></div>' +
+      '</div>';
+
+    row.querySelector('.report-btn').addEventListener('click', function(){ row.querySelector('.report-box').classList.toggle('open'); });
+    row.querySelector('.report-box button').addEventListener('click', async function(){
+      var reason = row.querySelector('.report-box textarea').value.trim();
+      await submitReport('listing', item.id, item.title, item.user_id, reason);
+      row.querySelector('.report-box').classList.remove('open');
+    });
+    row.querySelector('.remove-btn').addEventListener('click', async function(){
+      await removeListing(item.id);
+      loadListings(currentCollege);
+    });
+    row.querySelector('.confirm-trade-btn').addEventListener('click', async function(){
+      var statusEl = row.querySelector('.confirm-trade-status');
+      var btn = row.querySelector('.confirm-trade-btn');
+      btn.disabled = true;
+      var res = await confirmTrade(item.id);
+      btn.disabled = false;
+      if(res.ok){
+        statusEl.className = 'status-msg confirm-trade-status ok';
+        statusEl.textContent = 'Thanks — confirmed.';
+        loadListings(currentCollege);
+      } else {
+        statusEl.className = 'status-msg confirm-trade-status err';
+        statusEl.textContent = res.error || 'Something went wrong.';
+      }
+    });
+    row.querySelector('.edit-btn').addEventListener('click', function(){ row.querySelector('.edit-box').classList.toggle('open'); });
+    row.querySelector('.edit-cancel-btn').addEventListener('click', function(){ row.querySelector('.edit-box').classList.remove('open'); });
+    row.querySelector('.edit-save-btn').addEventListener('click', async function(){
+      var statusEl = row.querySelector('.edit-status');
+      var newTitle = row.querySelector('.edit-title').value.trim();
+      var newCourse = row.querySelector('.edit-course').value.trim();
+      var newPrice = row.querySelector('.edit-price').value;
+      var newContact = row.querySelector('.edit-contact').value.trim();
+      if(!newTitle || !newContact || newPrice === ''){ statusEl.className='status-msg edit-status err'; statusEl.textContent='Title, price, and contact are required.'; return; }
+      statusEl.className='status-msg edit-status'; statusEl.textContent='Saving…';
+      var ok = await updateListing(item.id, { title: newTitle, course: newCourse, price: Number(newPrice), contact: newContact });
+      if(ok){ loadListings(currentCollege); loadMyPosts(); }
+      else { statusEl.className='status-msg edit-status err'; statusEl.textContent='Something went wrong — try again.'; }
+    });
+    return row;
+  }
+
+  async function updateListing(id, changes){
+    if(sb){
+      var res = await sb.from('listings').update(changes).eq('id', id);
+      return !res.error;
+    }
+    if(usingFirebase){
+      try{ await fbDb.collection('listings').doc(id).update(changes); return true; }
+      catch(e){ logBug('firestore-error', e.message); return false; }
+    }
+    var item = memory.listings.find(function(x){ return x.id === id; });
+    if(item) Object.assign(item, changes);
+    return true;
+  }
+
+  // ============ Watchlist: in-app highlighting only. Real email/push alerts
+  // would need a scheduled backend job + an email service — not something
+  // this static page can honestly do on its own. ============
+  async function fetchWatchedCourses(collegeSlug){
+    if(!currentUser) return [];
+    var rows;
+    if(sb){
+      var res = await sb.from('watches').select('course').eq('user_id', currentUser.id).eq('college', collegeSlug);
+      rows = res.data || [];
+    } else if(usingFirebase){
+      try{
+        var snap = await fbDb.collection('watches').where('user_id','==',currentUser.id).where('college','==',collegeSlug).get();
+        rows = fsSnapToArray(snap);
+      }catch(e){ logBug('firestore-error', e.message); rows = []; }
+    } else {
+      rows = memory.watches.filter(function(w){ return w.user_id === currentUser.id && w.college === collegeSlug; });
+    }
+    return rows.map(function(r){ return String(r.course).trim().toLowerCase(); });
+  }
+
+  document.getElementById('watch-course-btn').addEventListener('click', async function(){
+    if(!currentUser || !currentCollege) return;
+    var input = document.getElementById('watch-course-input');
+    var course = input.value.trim();
+    if(!course) return;
+    var payload = { user_id: currentUser.id, college: slug(currentCollege), college_name: currentCollege, course: course, created_at: new Date().toISOString() };
+    if(sb){ await sb.from('watches').insert(payload); }
+    else if(usingFirebase){ try{ await fbDb.collection('watches').add(payload); }catch(e){ logBug('firestore-error', e.message); } }
+    else { payload.id = uid(); memory.watches.push(payload); }
+    input.value = '';
+    showGlitchToast('Watching ' + course + ' at ' + currentCollege + ' — matching listings will be highlighted.');
+    loadListings(currentCollege);
+    loadMyWatches();
+  });
+
+  async function removeWatch(id){
+    if(sb){ await sb.from('watches').delete().eq('id', id); }
+    else if(usingFirebase){ try{ await fbDb.collection('watches').doc(id).delete(); }catch(e){ logBug('firestore-error', e.message); } }
+    else { memory.watches = memory.watches.filter(function(w){ return w.id !== id; }); }
+  }
+
+  async function loadMyWatches(){
+    var container = document.getElementById('my-watches-container');
+    if(!currentUser){ container.innerHTML = '<p class="empty-note">Log in to watch course codes.</p>'; return; }
+    var rows;
+    if(sb){
+      var res = await sb.from('watches').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false});
+      rows = res.data || [];
+    } else if(usingFirebase){
+      try{
+        var snap = await fbDb.collection('watches').where('user_id','==',currentUser.id).orderBy('created_at','desc').get();
+        rows = fsSnapToArray(snap);
+      }catch(e){ logBug('firestore-error', e.message); rows = []; }
+    } else {
+      rows = memory.watches.filter(function(w){ return w.user_id === currentUser.id; });
+    }
+    if(rows.length === 0){ container.innerHTML = '<p class="empty-note">Watch a course code from any college\'s marketplace board to see it here.</p>'; return; }
+    container.innerHTML = '';
+    rows.forEach(function(w){
+      var row = document.createElement('div');
+      row.className = 'watch-row';
+      row.innerHTML = '<span>' + escapeHtml(w.course) + ' at ' + escapeHtml(w.college_name || w.college) + '</span>';
+      var btn = document.createElement('button');
+      btn.className = 'btn small ghost'; btn.type='button'; btn.textContent='Stop watching';
+      btn.addEventListener('click', async function(){ await removeWatch(w.id); loadMyWatches(); if(currentCollege) loadListings(currentCollege); });
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+  }
+
+  document.getElementById('college-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = heroInput.value.trim();
+    if(!name) return;
+    listingCollegeInput.value = name;
+    loadListings(name);
+    rememberPref(PREF_COLLEGE_KEY, name);
+    document.getElementById('marketplace').scrollIntoView({ behavior:'smooth' });
+  });
+  listingCollegeInput.addEventListener('change', function(){ var n=listingCollegeInput.value.trim(); if(n) loadListings(n); });
+  document.getElementById('refresh-listings').addEventListener('click', function(){ loadListings(currentCollege || listingCollegeInput.value.trim()); });
+
+  // ---------- ISBN price check: no ISBN-to-URL lookup API is reliably linkable
+  // (BookScouter's book pages need a title slug, not just the ISBN), so this
+  // opens their real search page and copies the ISBN for you to paste in,
+  // rather than guessing a deep link that might 404. ----------
+  document.getElementById('check-isbn-price-btn').addEventListener('click', async function(){
+    var note = document.getElementById('isbn-price-note');
+    var isbn = document.getElementById('listing-isbn').value.trim().replace(/[^0-9Xx]/g, '');
+    if(isbn.length !== 10 && isbn.length !== 13){
+      note.className = 'status-msg err';
+      note.textContent = 'ISBNs are 10 or 13 digits — double check what you typed.';
+      return;
+    }
+    var copied = false;
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(isbn);
+        copied = true;
+      }
+    }catch(e){ copied = false; }
+    note.className = 'status-msg ok';
+    note.textContent = copied
+      ? 'ISBN copied — opening BookScouter, paste it into their search to compare 30+ buyback/rental offers.'
+      : 'Opening BookScouter — paste ' + isbn + ' into their search to compare 30+ buyback/rental offers.';
+    window.open('https://bookscouter.com/', '_blank', 'noopener');
+  });
+
+  document.getElementById('listing-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var status = document.getElementById('listing-status');
+    var btn = document.getElementById('listing-submit');
+    if(!currentUser){ status.className='status-msg err'; status.textContent='Log in first.'; return; }
+    var college = listingCollegeInput.value.trim();
+    var title = document.getElementById('listing-title').value.trim();
+    var course = document.getElementById('listing-course').value.trim();
+    var isbn = document.getElementById('listing-isbn').value.trim().replace(/[^0-9Xx]/g, '');
+    var price = document.getElementById('listing-price').value;
+    var contact = document.getElementById('listing-contact').value.trim();
+    if(!college){ status.className='status-msg err'; status.textContent='Type your college first.'; return; }
+    if(!title || !contact || price===''){ status.className='status-msg err'; status.textContent='Fill in title, price, and contact.'; return; }
+
+    btn.disabled = true; status.className='status-msg'; status.textContent='Posting…';
+    var payload = { user_id: currentUser.id, college: slug(college), title: title, course: course, isbn: isbn, price: Number(price), contact: contact, hidden: false, created_at: new Date().toISOString() };
+    var ok = true;
+    if(sb){ var res = await sb.from('listings').insert(payload); ok = !res.error; }
+    else if(usingFirebase){ try{ await fbDb.collection('listings').add(payload); }catch(e){ ok = false; logBug('firestore-error', e.message); } }
+    else { payload.id = uid(); memory.listings.push(payload); }
+    btn.disabled = false;
+
+    if(ok){
+      status.className='status-msg ok'; status.textContent='Posted.';
+      var shareBtn = document.getElementById('share-listing-btn');
+      shareBtn.hidden = false;
+      shareBtn.onclick = async function(){
+        var url = new URL(window.location.href);
+        url.search = '';
+        url.searchParams.set('college', payload.college);
+        var msg = 'Selling "'+title+'" for $'+Number(price).toFixed(0)+' at '+college+' — check it out: '+url.toString();
+        var res = await shareOrCopy(msg);
+        shareBtn.textContent = (res === 'copied') ? 'Copied — paste it in your group chat!' : (res === 'shared' ? 'Shared!' : 'Share to your class group chat');
+        setTimeout(function(){ shareBtn.textContent = 'Share to your class group chat'; }, 2500);
+      };
+      document.getElementById('listing-title').value=''; document.getElementById('listing-course').value='';
+      document.getElementById('listing-isbn').value=''; document.getElementById('isbn-price-note').textContent='';
+      document.getElementById('listing-price').value=''; document.getElementById('listing-contact').value='';
+      loadListings(college);
+      loadMyPosts();
+    } else {
+      status.className='status-msg err'; status.textContent='Something went wrong — try again.';
+    }
+  });
+
+  async function removeListing(id){
+    if(sb){ await sb.from('listings').delete().eq('id', id); }
+    else if(usingFirebase){ try{ await fbDb.collection('listings').doc(id).delete(); }catch(e){ logBug('firestore-error', e.message); } }
+    else { memory.listings = memory.listings.filter(function(x){ return x.id !== id; }); }
+  }
+
+  // ============ Videos ============
+  var topicSearchInput = document.getElementById('topic-search-input');
+  var viewingTopic = document.getElementById('viewing-topic');
+  var videosContainer = document.getElementById('videos-container');
+  var videoTopicInput = document.getElementById('video-topic-input');
+  var currentTopic = '';
+
+  function extractYouTubeId(url){
+    try{
+      var u = new URL(url);
+      var host = u.hostname.replace(/^www\./,'');
+      if(host === 'youtu.be'){ return u.pathname.slice(1).split('/')[0] || null; }
+      if(host === 'youtube.com' || host === 'm.youtube.com'){
+        if(u.searchParams.get('v')) return u.searchParams.get('v');
+        var m = u.pathname.match(/\/embed\/([^\/?]+)/); if(m) return m[1];
+        var s = u.pathname.match(/\/shorts\/([^\/?]+)/); if(s) return s[1];
+      }
+    }catch(e){}
+    return null;
+  }
+
+  async function fetchVideos(topicSlug){
+    if(sb){
+      var res = await sb.from('videos').select('*').eq('topic', topicSlug).eq('hidden', false).order('created_at', { ascending: false });
+      return res.data || [];
+    }
+    if(usingFirebase){
+      try{
+        var snap = await fbDb.collection('videos').where('topic','==',topicSlug).where('hidden','==',false).orderBy('created_at','desc').get();
+        return fsSnapToArray(snap);
+      }catch(e){ logBug('firestore-error', e.message); return []; }
+    }
+    return memory.videos.filter(function(x){ return x.topic === topicSlug && !x.hidden; }).sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); });
+  }
+
+  function renderVisibleVideos(){
+    videosContainer.querySelectorAll('.item-card').forEach(function(el){
+      var ownerId = el.getAttribute('data-user-id');
+      var reportBtn = el.querySelector('.report-btn');
+      var removeBtn = el.querySelector('.remove-btn');
+      var editBtn = el.querySelector('.edit-btn');
+      if(reportBtn) reportBtn.hidden = !currentUser || currentUser.id === ownerId;
+      if(removeBtn) removeBtn.hidden = !currentUser || (currentUser.id !== ownerId && !currentUser.isAdmin);
+      if(editBtn) editBtn.hidden = !currentUser || currentUser.id !== ownerId;
+    });
+  }
+
+  async function loadVideos(topic){
+    currentTopic = topic || '';
+    if(!currentTopic){ viewingTopic.textContent='no topic searched yet'; videosContainer.innerHTML='<p class="empty-note">Search a topic above to see videos other students have added.</p>'; return; }
+    viewingTopic.textContent = currentTopic;
+    videosContainer.innerHTML = '<p class="empty-note">Loading…</p>';
+    var items = await fetchVideos(slug(currentTopic));
+    if(items.length === 0){ videosContainer.innerHTML = '<p class="empty-note">No videos yet for this topic — add one to help the next student.</p>'; return; }
+    videosContainer.innerHTML = '';
+    items.forEach(function(item){ videosContainer.appendChild(buildVideoCard(item)); });
+    renderVisibleVideos();
+  }
+
+  async function updateVideo(id, changes){
+    if(sb){
+      var res = await sb.from('videos').update(changes).eq('id', id);
+      return !res.error;
+    }
+    if(usingFirebase){
+      try{ await fbDb.collection('videos').doc(id).update(changes); return true; }
+      catch(e){ logBug('firestore-error', e.message); return false; }
+    }
+    var item = memory.videos.find(function(x){ return x.id === id; });
+    if(item) Object.assign(item, changes);
+    return true;
+  }
+
+  function buildVideoCard(item){
+    var card = document.createElement('div');
+    card.className = 'item-card';
+    card.setAttribute('data-id', item.id);
+    card.setAttribute('data-user-id', item.user_id);
+    var yt = null;
+    try{ yt = extractYouTubeId(item.url); }catch(e){ yt = null; }
+    var html = '<h4>'+escapeHtml(item.title)+'</h4>';
+    if(yt){ html += '<iframe src="https://www.youtube.com/embed/'+encodeURIComponent(yt)+'" allowfullscreen loading="lazy"></iframe>'; }
+    else {
+      var domain=''; try{ domain=new URL(item.url).hostname.replace(/^www\./,''); }catch(e){ domain='link'; }
+      html += '<div class="meta">'+escapeHtml(domain)+'</div><a class="link-out" href="'+escapeHtml(item.url)+'" target="_blank" rel="noopener">Watch / open →</a>';
+    }
+    if(item.note){ html += '<div class="note">"'+escapeHtml(item.note)+'"</div>'; }
+    html += '<div class="item-actions"><button class="btn small ghost report-btn" type="button" hidden>Report</button><button class="btn small ghost edit-btn" type="button" hidden>Edit</button><button class="btn small danger remove-btn" type="button" hidden>Remove</button></div>';
+    html += '<div class="report-box"><textarea placeholder="Why are you reporting this?"></textarea><button class="btn small" type="button" style="margin-top:8px;">Submit report</button></div>';
+    html += '<div class="edit-box"><div style="margin-bottom:8px;"><input class="edit-title" type="text" placeholder="Video title" value="'+escapeHtml(item.title)+'"></div><div style="margin-bottom:8px;"><input class="edit-url" type="url" placeholder="Video link" value="'+escapeHtml(item.url)+'"></div><div style="margin-bottom:8px;"><input class="edit-note" type="text" placeholder="Why it helped" value="'+escapeHtml(item.note||'')+'"></div><div style="display:flex;gap:8px;"><button class="btn small edit-save-btn" type="button">Save changes</button><button class="btn small ghost edit-cancel-btn" type="button">Cancel</button></div><div class="status-msg edit-status"></div></div>';
+    card.innerHTML = html;
+    card.querySelector('.report-btn').addEventListener('click', function(){ card.querySelector('.report-box').classList.toggle('open'); });
+    card.querySelector('.report-box button').addEventListener('click', async function(){
+      var reason = card.querySelector('.report-box textarea').value.trim();
+      await submitReport('video', item.id, item.title, item.user_id, reason);
+      card.querySelector('.report-box').classList.remove('open');
+    });
+    card.querySelector('.remove-btn').addEventListener('click', async function(){ await removeVideo(item.id); loadVideos(currentTopic); });
+    card.querySelector('.edit-btn').addEventListener('click', function(){ card.querySelector('.edit-box').classList.toggle('open'); });
+    card.querySelector('.edit-cancel-btn').addEventListener('click', function(){ card.querySelector('.edit-box').classList.remove('open'); });
+    card.querySelector('.edit-save-btn').addEventListener('click', async function(){
+      var statusEl = card.querySelector('.edit-status');
+      var newTitle = card.querySelector('.edit-title').value.trim();
+      var newUrl = card.querySelector('.edit-url').value.trim();
+      var newNote = card.querySelector('.edit-note').value.trim();
+      if(!newTitle || !newUrl){ statusEl.className='status-msg edit-status err'; statusEl.textContent='Title and link are required.'; return; }
+      if(!/^https?:\/\//i.test(newUrl)){ statusEl.className='status-msg edit-status err'; statusEl.textContent='Link should start with http:// or https://'; return; }
+      statusEl.className='status-msg edit-status'; statusEl.textContent='Saving…';
+      var ok = await updateVideo(item.id, { title: newTitle, url: newUrl, note: newNote });
+      if(ok){ loadVideos(currentTopic); loadMyPosts(); }
+      else { statusEl.className='status-msg edit-status err'; statusEl.textContent='Something went wrong — try again.'; }
+    });
+    return card;
+  }
+
+  document.getElementById('topic-search-btn').addEventListener('click', function(){ var t=topicSearchInput.value.trim(); if(t) loadVideos(t); });
+  topicSearchInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); var t=topicSearchInput.value.trim(); if(t) loadVideos(t); } });
+  topicSearchInput.addEventListener('change', function(){ var t=topicSearchInput.value.trim(); if(t) loadVideos(t); });
+
+  document.getElementById('video-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var status = document.getElementById('video-status');
+    var btn = document.getElementById('video-submit');
+    if(!currentUser){ status.className='status-msg err'; status.textContent='Log in first.'; return; }
+    var topic = videoTopicInput.value.trim();
+    var title = document.getElementById('video-title').value.trim();
+    var url = document.getElementById('video-url').value.trim();
+    var note = document.getElementById('video-note').value.trim();
+    if(!topic){ status.className='status-msg err'; status.textContent='Add a topic first.'; return; }
+    if(!title || !url){ status.className='status-msg err'; status.textContent='Fill in a title and link.'; return; }
+    if(!/^https?:\/\//i.test(url)){ status.className='status-msg err'; status.textContent='Link should start with http:// or https://'; return; }
+
+    btn.disabled = true; status.className='status-msg'; status.textContent='Adding…';
+    var payload = { user_id: currentUser.id, topic: slug(topic), title: title, url: url, note: note, hidden: false, created_at: new Date().toISOString() };
+    var ok = true;
+    if(sb){ var res = await sb.from('videos').insert(payload); ok = !res.error; }
+    else if(usingFirebase){ try{ await fbDb.collection('videos').add(payload); }catch(e){ ok = false; logBug('firestore-error', e.message); } }
+    else { payload.id = uid(); memory.videos.push(payload); }
+    btn.disabled = false;
+
+    if(ok){
+      status.className='status-msg ok'; status.textContent='Added.';
+      document.getElementById('video-title').value=''; document.getElementById('video-url').value=''; document.getElementById('video-note').value='';
+      topicSearchInput.value = topic;
+      loadVideos(topic);
+      loadMyPosts();
+    } else {
+      status.className='status-msg err'; status.textContent='Something went wrong — try again.';
+    }
+  });
+
+  async function removeVideo(id){
+    if(sb){ await sb.from('videos').delete().eq('id', id); }
+    else if(usingFirebase){ try{ await fbDb.collection('videos').doc(id).delete(); }catch(e){ logBug('firestore-error', e.message); } }
+    else { memory.videos = memory.videos.filter(function(x){ return x.id !== id; }); }
+  }
+
+  // ============ Reports ============
+  async function submitReport(itemType, itemId, itemTitle, reportedUserId, reason){
+    if(!currentUser) return;
+    var payload = { item_type: itemType, item_id: itemId, item_title: itemTitle, reported_user_id: reportedUserId || null, reporter_id: currentUser.id, reporter_email: currentUser.email, reason: reason || '', resolved: false, resolution_note: '', created_at: new Date().toISOString() };
+    if(sb){ await sb.from('reports').insert(payload); }
+    else if(usingFirebase){ try{ await fbDb.collection('reports').add(payload); }catch(e){ logBug('firestore-error', e.message); } }
+    else { payload.id = uid(); memory.reports.push(payload); }
+    showGlitchToast('Report submitted — thanks for helping keep listings honest.');
+  }
+
+  async function resolveReport(report, note){
+    var changes = { resolved: true, resolution_note: note || '' };
+    if(sb){ await sb.from('reports').update(changes).eq('id', report.id); }
+    else if(usingFirebase){ try{ await fbDb.collection('reports').doc(report.id).update(changes); }catch(e){ logBug('firestore-error', e.message); } }
+    else { Object.assign(report, changes); }
+  }
+
+  // ============ My reports (what happened after I reported something) ============
+  async function loadMyReports(){
+    var container = document.getElementById('my-reports-container');
+    if(!container) return;
+    if(!currentUser){ container.innerHTML = '<p class="empty-note">Log in to see reports you\'ve filed.</p>'; return; }
+    var rows;
+    if(sb){
+      var res = await sb.from('reports').select('*').eq('reporter_id', currentUser.id).order('created_at', {ascending:false});
+      rows = res.data || [];
+    } else if(usingFirebase){
+      try{
+        var snap = await fbDb.collection('reports').where('reporter_id','==',currentUser.id).orderBy('created_at','desc').get();
+        rows = fsSnapToArray(snap);
+      }catch(e){ logBug('firestore-error', e.message); rows = []; }
+    } else {
+      rows = memory.reports.filter(function(r){ return r.reporter_id === currentUser.id; });
+    }
+    if(rows.length === 0){ container.innerHTML = '<p class="empty-note">You haven\'t reported anything.</p>'; return; }
+    container.innerHTML = '';
+    rows.forEach(function(r){
+      var row = document.createElement('div');
+      row.className = 'watch-row';
+      var statusText = r.resolved ? ('Resolved' + (r.resolution_note ? ': ' + r.resolution_note : '')) : 'Pending review';
+      row.innerHTML = '<span>'+escapeHtml(r.item_title||'(untitled)')+' — <span style="color:'+(r.resolved?'#2b6b3f':'#8f3020')+';">'+escapeHtml(statusText)+'</span></span>';
+      container.appendChild(row);
+    });
+  }
+
+  // ============ My posts ============
+  async function loadMyPosts(){
+    var container = document.getElementById('my-posts-container');
+    var repLine = document.getElementById('my-reputation-line');
+    if(!currentUser){ container.innerHTML = '<p class="empty-note">Log in to see and manage what you\'ve posted.</p>'; if(repLine) repLine.textContent=''; return; }
+    container.innerHTML = '<p class="empty-note">Loading…</p>';
+    if(repLine){
+      var repMap = await fetchReputation([currentUser.id]);
+      var myCount = repMap[currentUser.id] || 0;
+      repLine.textContent = myCount > 0 ? ('✓ ' + myCount + ' student' + (myCount===1?'':'s') + ' confirmed a trade with you') : 'No confirmed trades yet — they show up here once a buyer confirms one.';
+    }
+    var myListings, myVideos;
+    if(sb){
+      var r1 = await sb.from('listings').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+      var r2 = await sb.from('videos').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+      myListings = r1.data || []; myVideos = r2.data || [];
+    } else if(usingFirebase){
+      try{
+        var s1 = await fbDb.collection('listings').where('user_id','==',currentUser.id).orderBy('created_at','desc').get();
+        var s2 = await fbDb.collection('videos').where('user_id','==',currentUser.id).orderBy('created_at','desc').get();
+        myListings = fsSnapToArray(s1); myVideos = fsSnapToArray(s2);
+      }catch(e){ logBug('firestore-error', e.message); myListings = []; myVideos = []; }
+    } else {
+      myListings = memory.listings.filter(function(x){ return x.user_id===currentUser.id; });
+      myVideos = memory.videos.filter(function(x){ return x.user_id===currentUser.id; });
+    }
+    if(myListings.length===0 && myVideos.length===0){ container.innerHTML = '<p class="empty-note">You haven\'t posted anything yet.</p>'; return; }
+    container.innerHTML = '';
+    myListings.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'admin-row';
+      row.innerHTML = '<div><div class="course">LISTING · '+escapeHtml(item.college)+'</div><h4 style="font-family:\'Fraunces\',serif;margin:2px 0;">'+escapeHtml(item.title)+'</h4><div class="meta">$'+Number(item.price).toFixed(0)+'</div></div>';
+      var btn = document.createElement('button'); btn.className='btn small danger'; btn.textContent='Delete'; btn.type='button';
+      btn.addEventListener('click', async function(){ await removeListing(item.id); loadMyPosts(); if(currentCollege) loadListings(currentCollege); });
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+    myVideos.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'admin-row';
+      row.innerHTML = '<div><div class="course">VIDEO · '+escapeHtml(item.topic)+'</div><h4 style="font-family:\'Fraunces\',serif;margin:2px 0;">'+escapeHtml(item.title)+'</h4></div>';
+      var btn = document.createElement('button'); btn.className='btn small danger'; btn.textContent='Delete'; btn.type='button';
+      btn.addEventListener('click', async function(){ await removeVideo(item.id); loadMyPosts(); if(currentTopic) loadVideos(currentTopic); });
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+  }
+
+  // ============ Admin ============
+  async function loadAdmin(){
+    var usersEl = document.getElementById('admin-stat-users');
+    var listingsEl = document.getElementById('admin-stat-listings');
+    var videosEl = document.getElementById('admin-stat-videos');
+    var reportsContainer = document.getElementById('admin-reports-container');
+
+    var allReports;
+    if(sb){
+      var pc = await sb.from('profiles').select('*', {count:'exact', head:true});
+      var lc = await sb.from('listings').select('*', {count:'exact', head:true}).eq('hidden', false);
+      var vc = await sb.from('videos').select('*', {count:'exact', head:true}).eq('hidden', false);
+      usersEl.textContent = pc.count != null ? pc.count : '—';
+      listingsEl.textContent = lc.count != null ? lc.count : '—';
+      videosEl.textContent = vc.count != null ? vc.count : '—';
+      var rr = await sb.from('reports').select('*').order('created_at', {ascending:false});
+      allReports = rr.data || [];
+    } else if(usingFirebase){
+      try{
+        var pcSnap = await fbDb.collection('profiles').count().get();
+        var lcSnap = await fbDb.collection('listings').where('hidden','==',false).count().get();
+        var vcSnap = await fbDb.collection('videos').where('hidden','==',false).count().get();
+        usersEl.textContent = pcSnap.data().count;
+        listingsEl.textContent = lcSnap.data().count;
+        videosEl.textContent = vcSnap.data().count;
+        var rrSnap = await fbDb.collection('reports').orderBy('created_at','desc').get();
+        allReports = fsSnapToArray(rrSnap);
+      }catch(e){
+        logBug('firestore-error', e.message);
+        usersEl.textContent = '—'; listingsEl.textContent = '—'; videosEl.textContent = '—';
+        allReports = [];
+      }
+    } else {
+      usersEl.textContent = '1 (preview)';
+      listingsEl.textContent = memory.listings.filter(function(x){return !x.hidden;}).length;
+      videosEl.textContent = memory.videos.filter(function(x){return !x.hidden;}).length;
+      allReports = memory.reports;
+    }
+
+    // Repeat-offender counts computed across ALL reports (resolved + pending),
+    // grouped by the reported item's poster — not just this one report.
+    var countsByUser = {};
+    allReports.forEach(function(r){
+      if(!r.reported_user_id) return;
+      countsByUser[r.reported_user_id] = (countsByUser[r.reported_user_id] || 0) + 1;
+    });
+
+    var pending = allReports.filter(function(r){ return !r.resolved; });
+    if(pending.length === 0){ reportsContainer.innerHTML = '<p class="empty-note">No reports pending — nothing flagged right now.</p>'; return; }
+    reportsContainer.innerHTML = '';
+    pending.forEach(function(r){
+      var row = document.createElement('div');
+      row.className = 'admin-row';
+      var offenderCount = r.reported_user_id ? (countsByUser[r.reported_user_id] || 1) : 1;
+      var offenderNote = offenderCount > 1 ? ' · <b>'+offenderCount+' total reports against this poster</b>' : '';
+      row.innerHTML = '<div><div class="course">'+escapeHtml((r.item_type||'').toUpperCase())+'</div><h4 style="font-family:\'Fraunces\',serif;margin:2px 0;">'+escapeHtml(r.item_title||'(untitled)')+'</h4><div class="meta">Reported by '+escapeHtml(r.reporter_email||'unknown')+': '+escapeHtml(r.reason||'no reason given')+offenderNote+'</div></div>';
+      var actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
+      var removeBtn = document.createElement('button'); removeBtn.className='btn small danger remove-btn'; removeBtn.type='button'; removeBtn.textContent='Remove item';
+      removeBtn.addEventListener('click', async function(){
+        if(r.item_type === 'listing'){ await removeListing(r.item_id); } else { await removeVideo(r.item_id); }
+        await resolveReport(r, 'Item removed by admin.');
+        loadAdmin();
+      });
+      var dismissBtn = document.createElement('button'); dismissBtn.className='btn small ghost dismiss-btn'; dismissBtn.type='button'; dismissBtn.textContent='Mark resolved';
+      dismissBtn.addEventListener('click', async function(){
+        var note = window.prompt('Optional note for the reporter (they\'ll see this in "My reports"):', '') || '';
+        await resolveReport(r, note);
+        loadAdmin();
+      });
+      actions.appendChild(removeBtn); actions.appendChild(dismissBtn);
+      row.appendChild(actions);
+      reportsContainer.appendChild(row);
+    });
+  }
+
+  // ============ Scholar Mode: major/minor -> curated resources ============
+  var MAJORS = [
+    "Computer Science","Mechanical Engineering","Electrical Engineering","Civil Engineering",
+    "Mathematics","Physics","Biology","Chemistry","Biochemistry","Nursing","Pre-Med",
+    "Public Health","Kinesiology","Business Administration","Finance","Accounting","Economics",
+    "Marketing","English","History","Philosophy","Foreign Languages","Political Science",
+    "Psychology","Sociology","Anthropology","Communications","Journalism","Art","Music",
+    "Theatre","Graphic Design","Architecture","Undecided"
+  ];
+  fillDatalist('major-options', MAJORS);
+
+  var FIELD_CATEGORIES = {
+    stem: {
+      label: 'STEM',
+      match: ['computer','engineer','math','physics','statistic','data science','software','information technology','robotics'],
+      resources: [
+        { name: 'MIT OpenCourseWare', url: 'https://ocw.mit.edu' },
+        { name: "Paul's Online Math Notes", url: 'https://tutorial.math.lamar.edu' },
+        { name: 'freeCodeCamp', url: 'https://www.freecodecamp.org' },
+        { name: 'Khan Academy', url: 'https://www.khanacademy.org' }
+      ],
+      extracurriculars: ['An IEEE or ACM student chapter', 'Campus hackathons', 'A robotics or design-build team', 'Undergraduate research with a professor in your department']
+    },
+    health: {
+      label: 'Health Sciences',
+      match: ['bio','nursing','pre-med','health','kinesiology','pharma','physical therapy','medic','chemistry'],
+      resources: [
+        { name: 'Khan Academy MCAT prep', url: 'https://www.khanacademy.org/test-prep/mcat' },
+        { name: 'CDC public health resources', url: 'https://www.cdc.gov' },
+        { name: 'NIH resources', url: 'https://www.nih.gov' },
+        { name: 'OpenStax Anatomy & Physiology', url: 'https://openstax.org/details/books/anatomy-and-physiology-2e' }
+      ],
+      extracurriculars: ['A pre-health student society', 'Clinic or hospital volunteering', 'EMT certification', 'A research lab on campus']
+    },
+    business: {
+      label: 'Business',
+      match: ['business','finance','accounting','econom','marketing','management','entrepreneur'],
+      resources: [
+        { name: 'Investopedia', url: 'https://www.investopedia.com' },
+        { name: 'Harvard Business Review (free articles)', url: 'https://hbr.org' },
+        { name: 'SCORE free mentoring', url: 'https://www.score.org' },
+        { name: 'Khan Academy Economics', url: 'https://www.khanacademy.org/economics-finance-domain' }
+      ],
+      extracurriculars: ['A DECA or business case-competition club', 'A student-run investment fund', 'An internship search through Handshake', 'A consulting club']
+    },
+    humanities: {
+      label: 'Humanities & Arts',
+      match: ['english','history','philosophy','language','art','music','theatre','design','architecture','literature','writing'],
+      resources: [
+        { name: 'Purdue OWL Writing Lab', url: 'https://owl.purdue.edu' },
+        { name: 'Project Gutenberg', url: 'https://www.gutenberg.org' },
+        { name: 'JSTOR Daily (free)', url: 'https://daily.jstor.org' },
+        { name: 'IMSLP public-domain sheet music', url: 'https://imslp.org' }
+      ],
+      extracurriculars: ['A campus literary magazine or student paper', 'A debate or Model UN team', 'A student gallery show or open mic', 'Your study-abroad office']
+    },
+    social: {
+      label: 'Social Sciences',
+      match: ['psycholog','sociolog','political','anthropolog','communicat','journalism'],
+      resources: [
+        { name: 'APA free student resources', url: 'https://www.apa.org/students' },
+        { name: 'Pew Research Center data', url: 'https://www.pewresearch.org' },
+        { name: 'Khan Academy Government & Civics', url: 'https://www.khanacademy.org/humanities/us-government-and-civics' },
+        { name: 'Khan Academy Psychology', url: 'https://www.khanacademy.org/science/high-school-biology/hs-human-body-systems' }
+      ],
+      extracurriculars: ['A Psi Chi psychology honor society chapter', 'A Model UN or mock trial team', 'A local campaign or advocacy internship', 'A research assistantship with a faculty member']
+    },
+    general: {
+      label: 'General Studies',
+      match: [],
+      resources: [
+        { name: 'Khan Academy', url: 'https://www.khanacademy.org' },
+        { name: 'Your campus career center', url: '#essentials' },
+        { name: 'Open Textbook Library', url: 'https://open.umn.edu/opentextbooks' },
+        { name: 'LibreTexts', url: 'https://libretexts.org' }
+      ],
+      extracurriculars: ['Your career center\'s major-exploration sessions', 'A general student org fair', 'An informational interview with a professor', 'A campus job or work-study role in a field you\'re curious about']
+    }
+  };
+
+  function classifyMajor(text){
+    var lower = String(text).toLowerCase();
+    var keys = ['stem','health','business','humanities','social'];
+    for(var i=0;i<keys.length;i++){
+      var cat = FIELD_CATEGORIES[keys[i]];
+      for(var j=0;j<cat.match.length;j++){
+        if(lower.indexOf(cat.match[j]) !== -1) return keys[i];
+      }
+    }
+    return 'general';
+  }
+
+  var currentMajorCategory = 'general';
+
+  document.getElementById('scholar-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var major = document.getElementById('scholar-input').value.trim();
+    if(!major) return;
+    var catKey = classifyMajor(major);
+    currentMajorCategory = catKey;
+    var cat = FIELD_CATEGORIES[catKey];
+    document.getElementById('scholar-viewing').textContent = major + ' (' + cat.label + ')';
+
+    var resContainer = document.getElementById('scholar-resources-container');
+    resContainer.innerHTML = '';
+    cat.resources.forEach(function(r){
+      var a = document.createElement('a');
+      a.className = 'res-card'; a.style.display='block'; a.style.textDecoration='none'; a.style.marginBottom='10px';
+      a.href = r.url; if(r.url.indexOf('#')!==0){ a.target='_blank'; a.rel='noopener'; }
+      a.innerHTML = '<h3 style="font-size:15px;">'+escapeHtml(r.name)+'</h3>';
+      resContainer.appendChild(a);
+    });
+
+    var extContainer = document.getElementById('scholar-extracurriculars-container');
+    extContainer.innerHTML = '<ul class="perks-list"></ul>';
+    var ul = extContainer.querySelector('ul');
+    cat.extracurriculars.forEach(function(x){ var li=document.createElement('li'); li.textContent=x; ul.appendChild(li); });
+  });
+
+  // ============ Brain Trainer ============
+  var CHALLENGE_BANK = {
+    stem: {
+      relaxed: ['Explain one concept from this week\'s class to an imaginary friend who\'s never heard of it.', 'What\'s one formula you use without really knowing why it works? Try to explain the "why."'],
+      balanced: ['Where would this week\'s technique actually break down or give a wrong answer?', 'Design a simple real-world scenario that this concept could solve.'],
+      elite: ['Prove or disprove: this method always gives the optimal answer. Find the edge case.', 'Combine two concepts from different units into one problem — then solve it.']
+    },
+    health: {
+      relaxed: ['Describe one body system\'s job in one sentence, like you\'re explaining it to a kid.', 'What\'s a symptom that could point to two totally different causes?'],
+      balanced: ['Walk through what happens in the body, step by step, when this system fails.', 'Why might two patients with the same diagnosis need different treatment?'],
+      elite: ['Design a differential diagnosis for a set of overlapping symptoms across three conditions.', 'Argue for and against a controversial treatment guideline using evidence.']
+    },
+    business: {
+      relaxed: ['Explain a business concept using a lemonade stand as the example.', 'What\'s one decision a company you like made that you disagree with — and why?'],
+      balanced: ['Pick a real company and identify their biggest strategic risk right now.', 'How would you price a new product if you had zero data on competitors?'],
+      elite: ['Build a case for why a profitable company should shut down one of its own product lines.', 'Argue both sides of a merger decision using only public information.']
+    },
+    humanities: {
+      relaxed: ['Summarize an idea from your reading in exactly two sentences.', 'What\'s a line or quote that stuck with you this week, and why?'],
+      balanced: ['Argue against the author\'s main point using their own evidence.', 'Compare this week\'s reading to something from a totally different era.'],
+      elite: ['Construct the strongest possible counter-argument to your own essay thesis.', 'Trace how one idea evolved across three different works or periods.']
+    },
+    social: {
+      relaxed: ['Describe a theory from class using a situation from your own life.', 'What\'s a headline this week that connects to something you\'re studying?'],
+      balanced: ['Where does this week\'s theory fail to explain real behavior?', 'Design a simple study to test one claim from your reading.'],
+      elite: ['Identify a confound that could invalidate a study you\'ve read, and redesign it.', 'Apply two competing theories to the same real event and see which explains it better.']
+    },
+    general: {
+      relaxed: ['What\'s one thing from this week you could explain confidently right now?', 'What\'s something you\'re still fuzzy on — write down exactly where it breaks down.'],
+      balanced: ['Teach this week\'s hardest concept as if writing a study guide for a friend.', 'What question do you wish your professor had spent more time on?'],
+      elite: ['Connect something from this class to something from a totally unrelated class.', 'Write the hardest possible exam question on this material, then answer it.']
+    }
+  };
+
+  var intensity = 'balanced';
+  document.querySelectorAll('.intensity-btn').forEach(function(btn){
+    if(btn.getAttribute('data-level') === intensity) btn.classList.add('active');
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.intensity-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      intensity = btn.getAttribute('data-level');
+    });
+  });
+
+  function setToggle(btn, on){
+    btn.setAttribute('data-on', on ? 'true' : 'false');
+    btn.textContent = on ? 'On' : 'Off';
+  }
+  var aiModeToggle = document.getElementById('ai-mode-toggle');
+  var critiqueModeToggle = document.getElementById('critique-mode-toggle');
+  aiModeToggle.addEventListener('click', function(){
+    var on = aiModeToggle.getAttribute('data-on') !== 'true';
+    setToggle(aiModeToggle, on);
+    var note = document.getElementById('ai-mode-note');
+    if(on && !aiConfigured){
+      note.hidden = false;
+      note.textContent = 'AI Mode is on, but no AI backend is connected yet — you\'ll get preview-quality feedback instead of real AI grading until one is set up.';
+    } else {
+      note.hidden = true;
+    }
+  });
+  critiqueModeToggle.addEventListener('click', function(){
+    setToggle(critiqueModeToggle, critiqueModeToggle.getAttribute('data-on') !== 'true');
+  });
+
+  document.getElementById('new-challenge-btn').addEventListener('click', function(){
+    var bank = CHALLENGE_BANK[currentMajorCategory] || CHALLENGE_BANK.general;
+    var pool = bank[intensity] || bank.balanced;
+    var q = pool[Math.floor(Math.random() * pool.length)];
+    document.getElementById('challenge-question').textContent = q;
+    document.getElementById('challenge-difficulty-tag').textContent = intensity.charAt(0).toUpperCase() + intensity.slice(1);
+    document.getElementById('challenge-answer').value = '';
+    document.getElementById('feedback-panel').innerHTML = '';
+    document.getElementById('feedback-status').textContent = '';
+  });
+
+  // Real AI path needs your own tiny backend proxy holding a real Anthropic API
+  // key server-side (never put a real API key in this file's client-side code).
+  var AI_PROXY_URL = 'YOUR_AI_PROXY_URL';
+  var aiConfigured = AI_PROXY_URL.indexOf('YOUR_AI_PROXY_URL') === -1 && AI_PROXY_URL.length > 0;
+
+  async function getAIFeedback(question, answer, critique, aiOn){
+    if(aiOn && aiConfigured){
+      try{
+        var res = await fetch(AI_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question, answer: answer, critique: critique })
+        });
+        if(!res.ok) throw new Error('proxy returned ' + res.status);
+        var data = await res.json();
+        return { text: data.feedback || '(empty response)', real: true };
+      }catch(e){
+        logBug('ai-proxy-error', e.message);
+        return { text: 'Could not reach the AI proxy — check it is deployed and reachable.', real: false, error: true };
+      }
+    }
+    // Honest preview-mode fallback: not real grading, just a believable placeholder
+    // so the toggle and UI are fully testable before an AI backend exists, and so
+    // turning AI Mode off always gives you this instead, even if a backend IS configured.
+    var wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+    if(wordCount === 0){
+      return { text: 'There\'s nothing written yet to react to.', real: false };
+    }
+    if(critique){
+      return { text: '(Preview mode — not real AI grading) At '+wordCount+' words, a rigorous reader would ask: where\'s your strongest evidence, and what\'s the most obvious objection you haven\'t addressed? Answers that only restate the question rarely survive real critique.', real: false };
+    }
+    return { text: '(Preview mode — not real AI grading) Nice attempt at '+wordCount+' words — you\'re engaging with the actual question rather than dodging it, which is most of the battle. Connect it to a specific example next time.', real: false };
+  }
+
+  document.getElementById('get-feedback-btn').addEventListener('click', async function(){
+    var status = document.getElementById('feedback-status');
+    var panel = document.getElementById('feedback-panel');
+    var question = document.getElementById('challenge-question').textContent;
+    var answer = document.getElementById('challenge-answer').value;
+    if(!answer.trim()){ status.className='status-msg err'; status.textContent='Write an answer first.'; return; }
+    var critique = critiqueModeToggle.getAttribute('data-on') === 'true';
+    var aiOn = aiModeToggle.getAttribute('data-on') === 'true';
+    status.className='status-msg'; status.textContent = aiOn && aiConfigured ? 'Asking the AI…' : 'Generating feedback…';
+
+    var result = await getAIFeedback(question, answer, critique, aiOn);
+    status.textContent = '';
+    var card = document.createElement('div');
+    card.className = 'feedback-card ' + (critique ? 'critique' : 'gentle');
+    card.innerHTML = '<span class="fb-tag">'+(result.real ? 'AI feedback' : 'Preview feedback')+' · '+(critique?'critique mode':'supportive mode')+'</span><div>'+escapeHtml(result.text)+'</div>';
+    panel.prepend(card);
+  });
+
+  // ============ Focus timer ============
+  var timerSeconds = 600, timerInterval = null, timerRunning = false;
+  function renderTimer(){
+    var m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+    document.getElementById('timer-display').textContent = (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  document.querySelectorAll('.timer-preset').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      clearInterval(timerInterval); timerRunning = false;
+      timerSeconds = parseInt(btn.getAttribute('data-mins'),10) * 60;
+      document.getElementById('timer-start-btn').textContent = 'Start';
+      renderTimer();
+    });
+  });
+  document.getElementById('timer-start-btn').addEventListener('click', function(){
+    var btn = document.getElementById('timer-start-btn');
+    if(timerRunning){
+      clearInterval(timerInterval); timerRunning = false; btn.textContent = 'Start';
+      return;
+    }
+    timerRunning = true; btn.textContent = 'Pause';
+    timerInterval = setInterval(function(){
+      if(timerSeconds <= 0){ clearInterval(timerInterval); timerRunning = false; btn.textContent = 'Start'; showGlitchToast('Focus session done — nice work.'); return; }
+      timerSeconds -= 1;
+      renderTimer();
+    }, 1000);
+  });
+  document.getElementById('timer-reset-btn').addEventListener('click', function(){
+    clearInterval(timerInterval); timerRunning = false; timerSeconds = 600;
+    document.getElementById('timer-start-btn').textContent = 'Start';
+    renderTimer();
+  });
+  renderTimer();
+
+  // ============ Premium waitlist ============
+  document.getElementById('premium-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var status = document.getElementById('premium-status');
+    var btn = document.getElementById('premium-submit');
+    var emailInput = document.getElementById('premium-email');
+    var email = emailInput.value.trim();
+    if(!email){ status.className='status-msg err'; status.textContent='Enter an email first.'; return; }
+    btn.disabled = true; status.className='status-msg'; status.textContent='Joining…';
+    var payload = { email: email, referred_by: referredBy || null, created_at: new Date().toISOString() };
+    var ok = true;
+    if(sb){ var res = await sb.from('premium_interest').insert(payload); ok = !res.error; }
+    else if(usingFirebase){ try{ await fbDb.collection('premium_interest').add(payload); }catch(e){ ok = false; logBug('firestore-error', e.message); } }
+    else { memory.premiumInterest.push(payload); }
+    btn.disabled = false;
+    if(ok){
+      status.className='status-msg ok';
+      status.textContent = referredBy ? "You're on the list, with referral priority — no payment taken." : "You're on the list — no payment taken.";
+      emailInput.value='';
+      updateInviteLinkBox();
+    } else {
+      status.className='status-msg err'; status.textContent='Something went wrong — try again.';
+    }
+  });
+
+  function updateInviteLinkBox(){
+    var box = document.getElementById('invite-link-box');
+    if(!currentUser){ box.hidden = true; return; }
+    var url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('ref', currentUser.id);
+    document.getElementById('invite-link-input').value = url.toString();
+    box.hidden = false;
+  }
+  document.getElementById('copy-invite-link-btn').addEventListener('click', async function(){
+    var input = document.getElementById('invite-link-input');
+    input.select();
+    var res = await shareOrCopy(input.value);
+    var btn = document.getElementById('copy-invite-link-btn');
+    var original = btn.textContent;
+    btn.textContent = (res === 'copied' || res === 'shared') ? 'Copied!' : 'Copy';
+    setTimeout(function(){ btn.textContent = original; }, 2000);
+  });
+
+  // ============ Shareable links: ?college=<slug> auto-opens that board,
+  // ?ref=<user id> tags a referral for the Syllabank+ waitlist,
+  // ?lang=<code> opens directly in that language ============
+  var urlParams = new URLSearchParams(window.location.search);
+  var referredBy = urlParams.get('ref') || '';
+  var deepLinkCollege = urlParams.get('college') || '';
+  var urlLang = urlParams.get('lang') || '';
+
+  function shareOrCopy(text){
+    if(navigator.share){
+      return navigator.share({ text: text }).then(function(){ return 'shared'; }).catch(function(){ return 'cancelled'; });
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).then(function(){ return 'copied'; }).catch(function(){ return 'failed'; });
+    }
+    return Promise.resolve('failed');
+  }
+
+  document.getElementById('lang-switcher').addEventListener('change', function(e){
+    applyLanguage(e.target.value);
+    rememberPref(PREF_LANG_KEY, e.target.value);
+    var url = new URL(window.location.href);
+    url.searchParams.set('lang', e.target.value);
+    window.history.replaceState(null, '', url.toString());
+  });
+
+  // ============ Init ============
+  setStatusBar();
+  updateAuthUI();
+  restoreSession();
+  // Language priority: explicit ?lang= link > a remembered choice from a past
+  // visit > the browser's own language > English.
+  applyLanguage(urlLang || recallPref(PREF_LANG_KEY) || (navigator.language || 'en').slice(0,2));
+  // College priority: an explicit ?college= link > a remembered college from
+  // a past visit. Either way, this only pre-fills and loads it — it never
+  // posts or changes anything, so there's nothing risky about doing this
+  // automatically on load.
+  var rememberedCollege = recallPref(PREF_COLLEGE_KEY);
+  if(deepLinkCollege){
+    heroInput.value = deepLinkCollege;
+    listingCollegeInput.value = deepLinkCollege;
+    loadListings(deepLinkCollege);
+    setTimeout(function(){ document.getElementById('marketplace').scrollIntoView(); }, 300);
+  } else if(rememberedCollege){
+    heroInput.value = rememberedCollege;
+    listingCollegeInput.value = rememberedCollege;
+    loadListings(rememberedCollege);
+  }
+  if(referredBy){
+    var refBanner = document.getElementById('referral-banner');
+    if(refBanner) refBanner.hidden = false;
+  }
+
+})();
+</script>
+
+</body>
+</html>
