@@ -1241,7 +1241,7 @@
 
   async function sendCode(email){
     if(sb){
-      var res = await sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
+      var res = await sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true, emailRedirectTo : window.location.origin+ window.location.pathname  } });
       return { ok: !res.error, error: res.error && res.error.message };
     }
     if(usingFirebase){
