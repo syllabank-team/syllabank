@@ -523,6 +523,10 @@
         <span class="tag" data-i18n="account.loggedIn">Logged in</span>
         <p style="font-size:15px;"><span data-i18n="account.verifiedAs">Verified as</span> <b id="auth-current-email"></b></p>
         <button class="btn ghost" type="button" id="account-logout-btn" data-i18n="nav.logout">Log out</button>
+           <div style="margin-top:18px;">
+<button class="btn ghost" type="button" id="delete-account-btn" style="color:var(--rust-dark);">Delete my account</button>
+<div class="status-msg" id="delete-account-status"></div>
+</div>
       </div>
     </div>
 
@@ -651,7 +655,7 @@
         <li>Basic error logs (what broke, when) to fix bugs — no payment or government ID data is ever collected, because we don't ask for any.</li>
         <li>Anonymous visit data (how many people visit, how long they stay) via Google Analytics — not tied to your name or email, used only to see whether the site is being used.</li>
         <li>We don't sell your email or listing data to anyone.</li>
-        <li>Want your account and data deleted? Contact the site owner — until a self-serve option exists, it's a manual request.</li>
+        <li>Want your account and data deleted? Log in and use the "Delete my account" button in the account section. It removes your listings, videos, saved courses and your login.</li>
       </ul>
     </div>
   </div>
@@ -1371,6 +1375,28 @@ document.getElementById('college-form').addEventListener('submit',function(){set
 
   document.getElementById('nav-logout-btn').addEventListener('click', logout);
   document.getElementById('account-logout-btn').addEventListener('click', logout);
+       // ---- Delete my account ----
+  var deleteBtn = document.getElementById('delete-account-btn');
+  var deleteStatus = document.getElementById('delete-account-status');
+  if(deleteBtn){
+    deleteBtn.addEventListener('click', async function(){
+      if(!sb){ deleteStatus.className='status-msg err'; deleteStatus.textContent='Account deletion is only available when the site is connected to its database.'; return; }
+      var answer = window.prompt('This permanently deletes your account, your listings, your videos and your watched courses. This cannot be undone.\n\nType DELETE to confirm.');
+      if(answer !== 'DELETE'){ deleteStatus.className='status-msg'; deleteStatus.textContent='Cancelled. Nothing was deleted.'; return; }
+      deleteBtn.disabled = true;
+      deleteStatus.className='status-msg'; deleteStatus.textContent='Deleting…';
+      try{
+        var res = await sb.rpc('delete_my_account');
+        if(res.error){ throw res.error; }
+        try{ await sb.auth.signOut(); }catch(e){}
+        window.location.href = window.location.pathname;
+      }catch(err){
+        deleteBtn.disabled = false;
+        deleteStatus.className='status-msg err';
+        deleteStatus.textContent='Could not delete: ' + (err && err.message ? err.message : 'unknown error');
+      }
+    });
+  }
 
   // ============ Connection status bar ============
   function setStatusBar(){
