@@ -177,6 +177,8 @@
 .more-panel a{text-decoration:none;white-space:nowrap;}
 #scholar,#premium,#essentials,#legal{display:none;}
 #scholar:target,#premium:target,#essentials:target,#legal:target{display:block;}
+#resources,#marketplace,#help,#account{display:none;}
+#resources:target,#marketplace:target,#help:target,#account:target{display:block;}
 </style>
 </head>
 <body>
@@ -666,6 +668,9 @@
   <div>*U.S. average per College Board estimates, varies by school and year.</div>
   <div>© 2026 Syllabank. All rights reserved.</div>
 </footer>
+     <script>
+document.getElementById('college-form').addEventListener('submit',function(){setTimeout(function(){location.hash='#marketplace';},50);});
+</script>
 
 <script>
 (function(){
