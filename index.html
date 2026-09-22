@@ -181,6 +181,7 @@
 #resources,#marketplace,#help,#account{display:none;}
 #resources:target,#marketplace:target,#help:target,#account:target{display:block;}
 .nav-auth .btn.ghost{color:var(--paper);}
+#marketplace,#scholar{display:none !important;}
 .nav-auth .btn.ghost{color:var(--paper);}
 </style>
 </head>
@@ -190,13 +191,11 @@
   <div class="brand"><a href="./" style="text-decoration:none;display:flex;align-items:center;gap:8px;"><span class="dot"></span>Syllabank</a></div>
   <ul>
     <li><a href="#resources" data-i18n="nav.resources">Free & open</a></li>
-    <li><a href="#marketplace" data-i18n="nav.marketplace">Marketplace</a></li>
     <li><a href="#help" data-i18n="nav.help">Extra help</a></li>
        <li class="more-menu">
 <details>
 <summary>More ▾</summary>
 <div class="more-panel">
-<a href="#scholar" onclick="this.closest('details').removeAttribute('open')">Scholar Mode</a>
 
 <a href="#essentials" onclick="this.closest('details').removeAttribute('open')">Campus essentials</a>
 <a href="#legal" onclick="this.closest('details').removeAttribute('open')">Terms & Privacy</a>
@@ -267,12 +266,12 @@
       <h3 data-i18n="quicklook.textbooks">Free textbooks</h3>
       <p data-i18n="quicklook.textbooksDesc">Open, legal resources</p>
     </a>
-    <a href="#marketplace" class="res-card" style="text-decoration:none;color:inherit;">
+    
       <span class="badge" data-i18n="quicklook.tradeBadge">Trade</span>
       <h3 data-i18n="quicklook.marketplace">Marketplace</h3>
       <p data-i18n="quicklook.marketplaceDesc">Buy and sell with real students</p>
     </a>
-    <a href="#help" class="res-card" style="text-decoration:none;color:inherit;">
+    
       <span class="badge" data-i18n="quicklook.helpBadge">Help</span>
       <h3 data-i18n="quicklook.videos">Study videos</h3>
       <p data-i18n="quicklook.videosDesc">Get unstuck on any topic</p>
@@ -678,7 +677,6 @@
 <footer>
 <div>Syllabank v3.4 — last updated September 14, 2026.</div>
 <div style="display:flex;gap:16px;flex-wrap:wrap;">
-<a href="#scholar" style="color:inherit;">Scholar Mode</a>
 
 <a href="#essentials" style="color:inherit;">Campus essentials</a>
 <a href="#legal" style="color:inherit;">Terms & Privacy</a>
